@@ -60,7 +60,8 @@ int initFreeSpace (int blockCount, int bytesPerBlock)
                 {
                 printf("LBAwrite error!\n");
                 exit(1);
-  */              }
+				}
+  */              
 
 	bitmap = NULL;
 	//return the block where the free space starts
