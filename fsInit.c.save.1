@@ -1,0 +1,107 @@
+/**************************************************************
+* Class:  CSC-415-02 Fall 2021
+* Names: Paige Hodgkinson, Jeawan Jang, Carlos Campos Lozano,  Randale Reyes
+* Student IDs: 922282852, 923070860, 920768261, 921008696
+* GitHub Name: phodgkinson1, jeawanjang, ccamposlozano, RandaleReyes
+* Group Name: Geriatric Cats
+* Project: Basic File System
+*
+* File: fsInit.c
+*
+* Description: Main driver for file system assignment.
+*
+* This file is where you will start and initialize your system
+*
+**************************************************************/
+
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "fsLow.h"
+#include "mfs.h"
+#include "stdio.h"
+#include "time.h"
+#include "stdlib.h"
+#include "stdbool.h"
+
+#include "vcb.h"
+#include "freespace.h"
+#include "directoryEntry.h"
+#include "mfsHelper.h"
+
+#define SIGNATURE 1
+
+// Fundamental function that initialize the File System
+// including initVCB(), initFreeSpace(), and initDir()
+int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
+{
+    printf ("Initializing File System with %ld blocks with a block size of %ld\n", numberOfBlocks, blockSize);
+
+    //initialize a buffer to check for volume control block
+    struct VCB *vcb = malloc(BLOCK_SIZE * sizeof(char));
+    struct DE * de = malloc(BLOCK_SIZE);
+
+    // LBAread vcb from [0] for 1 block, VCB starts from 0 and is one block
+    LBAread(vcb, 1, 0);
+
+    // Check whether the signature is matched, if true volume is already initialized
+    if (vcb->signature == SIGNATURE)
+    	{
+//	printf("signature: %ld\n", vcb->signature);
+//	printf("SIGNATURE: %ld\n", SIGNATURE);
+	// Update already done
+	printf("\n\nVolume is already initialized\n");
+
+	// call/return check loadFreeSpace to copy the existing freespace
+        int loadFS = loadFreeSpace(numberOfBlocks, blockSize);
+//        printf("start FSM: %d\n", loadFS);
+    	}
+    //initialize volume
+    else
+    	{
+//        printf("signature: %ld\n", vcb->signature);
+//        printf("SIGNATURE: %ld\n", SIGNATURE);
+	// Update needed
+//	printf("\n\n Entered condition to initialize volume \n");
+
+        //  *****  Initialize File System *****
+	// (1) Initialize the values in the VCB (volume control block)
+	initVCB(vcb);
+
+//	printf("***** After Initializing VCB ***** \n");
+//        printf("signature: %ld\n", vcb->signature);
+//	printf("total num blocks: %d\n", vcb->totalNumBlocks);
+//	printf("block size: %d\n", vcb->sizeOfBlock);
+
+	free(vcb);
+
+	// (2) Initialize free space management
+	int startFreeSpaceManagement = initFreeSpace(numberOfBlocks, blockSize);
+//	printf("start FSM: %d\n",startFreeSpaceManagement);
+
+	// (3) Initialize root directory
+      	int startDirectory = initDir(DEFAULT_ENTRIES, NULL);
+//        printf("startDirectory: %d\n", startDirectory);
+
+	int returnCheck= LBAread(de, 1, 6);
+//	printf("returnCheck: %d, de[0].fileName: %s\n", returnCheck, de[0].fileName);
+
+	int subDirReturn = initDir(DEFAULT_ENTRIES, *&de);
+//	printf("subDirReturn: %d\n", subDirReturn);
+
+	free(de);
+    	}
+
+    	return 0;
+}
+
+
+void exitFileSystem ()
+{
+	if(rootDir != NULL) free(rootDir);
+    	free(bitmapGlobal);
+    	printf ("System exiting\n");
+}
