@@ -178,7 +178,7 @@ fdDir *fs_opendir(const char *pathname)
     if(ppiTest->indexOfLastElement != -1){
         
         //check if pathname is a directory
-        if(isDirectory(&ppiTest->parent[ppiTest->indexOfLastElement])){
+        if(isDirectory(&ppiTest->parent[ppiTest->indexOfLastElement] == 1)){
 
             //load directory to initialize it in fdDir struct that will be the return value
             myDir = loadDir(ppiTest->parent, ppiTest->indexOfLastElement);
@@ -199,9 +199,28 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
     // Update the dirEntryPosition in dirPath to keep track of the position
     // Return NULL if there are no more entries
 
-    // Implementation specific
+    int directoryEntries = dirPath->directory[0].fileSize / sizeof(DE);
 
-    return NULL;
+    
+    while(&dirPath->directory[dirPath->dirEntryPosition] == NULL){
+        dirPath->dirEntryPosition++;
+        if(dirPath->dirEntryPosition >= directoryEntries){
+            return NULL;
+        }
+    }
+
+    //copy the name of currenct directory to fs_diriteminfo
+    strcpy(dirPath->di->d_name, dirPath->directory[dirPath->dirEntryPosition].fileName);
+    
+    //check the type of the directory
+    if(isDirectory(dirPath->directory) == 1){
+        dirPath->di->fileType = "Directory";
+    }
+    else{
+        dirPath->di->fileType = "File";
+    }
+    
+    return dirPath->di;
 }
 
 int fs_closedir(fdDir *dirPath)
