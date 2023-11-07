@@ -13,17 +13,17 @@
 int rootGlobal;
 
 typedef struct DE
-	{
-    	char fileName[DIR_NAME_LEN];
+{
+	char fileName[DIR_NAME_LEN];
 	int extentBlockStart;
 	int extentIndex;
-   	int fileSize;
- 	time_t createdTime;
-    	time_t modifiedTime;
-    	time_t lastAccessedTime;
-    	//isDirectory already does checking for file or directory =1 or 0
+	int fileSize;
+	time_t createdTime;
+	time_t modifiedTime;
+	time_t lastAccessedTime;
+	// isDirectory already does checking for file or directory =1 or 0
 	char isDirectory;
-	} DE;
+} DE;
 
 // Initialize a new directory
 int initDir(int defaultEntries, DE *parent);
