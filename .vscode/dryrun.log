@@ -8,6 +8,7 @@ gcc -c -o freespace.o freespace.c -g -I.
 gcc -c -o directoryEntry.o directoryEntry.c -g -I. 
 gcc -c -o mfs.o mfs.c -g -I. 
 gcc -c -o mfsHelper.o mfsHelper.c -g -I. 
+ 
 gcc -o fsshell fsshell.o fsInit.o vcb.o freespace.o directoryEntry.o mfs.o mfsHelper.o fsLow.o -g -I. -lm -l readline -l pthread
 make: Leaving directory `/Users/ccamposlozano/Documents/CSC 415 - Operating Systems/GeriatricCats2'
  
