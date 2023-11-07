@@ -10,11 +10,10 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 make: *** No rule to make target `all'.  Stop.
 
 
-# Make data base, printed on Tue Nov  7 11:42:30 2023
+# Make data base, printed on Tue Nov  7 11:47:58 2023
 
 # Variables
 
- 
 # automatic
 <D = $(patsubst %/,%,$(dir $<))
 # automatic
@@ -95,7 +94,6 @@ SHLVL = 1
 RUNOPTIONS = SampleVolume 10000000 512
 # makefile (from `Makefile', line 41)
 CC = gcc
- 
 # default
 MAKE_VERSION := 3.81
 # environment
@@ -146,6 +144,7 @@ ROOTNAME = fsshell
 LIBS = pthread
 # automatic
 ^F = $(notdir $^)
+ 
 # makefile (from `Makefile', line 44)
 DEPS = 
 # default
@@ -158,7 +157,6 @@ MAKELEVEL := 0
 LANG = C
 # environment
 VSCODE_PID = 4075
- 
 # variable set hash-table stats:
 # Load=71/1024=7%, Rehash=0, Collisions=8/114=7%
 
@@ -306,6 +304,6 @@ fsshell.o:
 # strcache size: total = 4096 / max = 4096 / min = 4096 / avg = 4096
 # strcache free: total = 4087 / max = 4087 / min = 4087 / avg = 4087
 
-# Finished Make data base on Tue Nov  7 11:42:30 2023
+# Finished Make data base on Tue Nov  7 11:47:58 2023
 
  
