@@ -159,7 +159,7 @@ fdDir *fs_opendir(const char *pathname)
 
     // initilize a directory and a parsePathInfo struct
     DE *myDir = malloc(sizeof(DE)); // not sure if I need to malloc
-    parsePathInfo *ppiTest = malloc(sizeof(parsePathInfo)); 
+    parsePathInfo *ppi = malloc(sizeof(parsePathInfo)); 
 
     // Check for NULL pathname
     if (pathname == NULL)
@@ -171,17 +171,17 @@ fdDir *fs_opendir(const char *pathname)
     char *pathNameCopy = strdup(pathname);
 
     //call parsePath() to traverse and update ppiTest
-    int parsePathCheck = parsePath(pathNameCopy, ppiTest);
+    int parsePathCheck = parsePath(pathNameCopy, ppi);
     //printf("return value of parsePath(): %d",  parsePathCheck);
 
     //check if directory with pathname exists
-    if(ppiTest->indexOfLastElement != -1){
+    if(ppi->indexOfLastElement != -1){
         
         //check if pathname is a directory
-        if(isDirectory(&ppiTest->parent[ppiTest->indexOfLastElement] == 1)){
+        if(isDirectory(&ppi->parent[ppi->indexOfLastElement] == 1)){
 
             //load directory to initialize it in fdDir struct that will be the return value
-            myDir = loadDir(ppiTest->parent, ppiTest->indexOfLastElement);
+            myDir = loadDir(ppi->parent, ppi->indexOfLastElement);
             fdDir *fdd = malloc(sizeof(fdDir));
             
             fdd->directory = myDir;
@@ -190,6 +190,9 @@ fdDir *fs_opendir(const char *pathname)
 
             return(fdd);
         }
+
+        free(myDir);
+        free(ppi);
     }
 }
 
@@ -199,9 +202,12 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
     // Update the dirEntryPosition in dirPath to keep track of the position
     // Return NULL if there are no more entries
 
-    int directoryEntries = dirPath->directory[0].fileSize / sizeof(DE);
+    printf("Inside fs_readdir\n");
 
+    int directoryEntries = dirPath->directory[0].fileSize / sizeof(DE);
     
+    //in the other section he used a for loop
+    //how to know if a directory entry is being used? I used NULL
     while(&dirPath->directory[dirPath->dirEntryPosition] == NULL){
         dirPath->dirEntryPosition++;
         if(dirPath->dirEntryPosition >= directoryEntries){
@@ -219,6 +225,9 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
     else{
         dirPath->di->fileType = "File";
     }
+
+    //update positon for next iteration
+    dirPath->dirEntryPosition++;
     
     return dirPath->di;
 }
@@ -226,10 +235,9 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
 int fs_closedir(fdDir *dirPath)
 {
     // Close the directory specified by dirPath
+    releaseBlocks(dirPath->directory->extentBlockStart, dirPath->directory->extentIndex);
+
     // Free resources allocated for the dirPath structure
-
-    // Implementation specific
-
     free(dirPath);
     return 0;
 }
