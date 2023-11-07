@@ -122,13 +122,16 @@ int FindEntryInDir(DE *dir, char *fileName)
 // Check whether entry is directory or others
 int isDirectory(DE *dir)
 {
-	if (dir == NULL || dir->isDirectory != 1)
+	if (dir == NULL)
 	{
-		printf("%s is not directory!\n", dir->fileName);
+		printf("Empty !\n");
 		return -1;
 	}
-	return 1;
+
+	if (dir->isDirectory == 1) return 1;
+	else return 0;
 }
+
 
 // load an extent table for a directory to retreive locations of directory entry items
 EXTTABLE *loadExtent(DE *dir)

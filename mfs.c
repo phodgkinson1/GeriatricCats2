@@ -111,25 +111,45 @@ readdir (fdDir *fdd)
 
 */
 
+
+// Remove empty directory
 int fs_rmdir(const char *pathname)
 {
-    /*   char path[256];
-       strcpy(path, currentDir);
-       if (currentDir[strlen(currentDir) - 1] != '/') {
-           strcat(path, "/");
-       }
-       strcat(path, pathname);
+    // ParsePath
+    parsePathInfo ppi;
+    if (parsePath((char *)pathname, &ppi) != 0) return -1;
 
-       if (!fs_isDir(path)) {
-           // Directory does not exist
-           return -1;
-       }
+    // find index
+    int index = FindEntryInDir(ppi.parent, ppi.lastElement);
+    if (index == -1) return -1;
 
-       // Remove the directory
-       // Implementation specific, use fsLow.h functions
-       // Update your directory structure?
-   */
-    return 0;
+    // load the directory to be removed
+    DE *dirRemove = loadDir(ppi.parent, index);
+
+    // check fs_isDir is 1 --> dir (must be return dir)
+    if (fs_isDir((char *)pathname) != 1) return -1;
+
+    // check loading directory is empty (must be empty)
+    if (dirRemove != NULL) return -1;
+
+    // Release the blokcs associated with dirRemove
+    EXTTABLE *extTable = loadExtent(dirRemove);
+
+    for (int i = 0; i < 5; i++)
+    {
+	if (extTable->tableArray[i].count > 0)
+	{
+	    releaseBlocks(extTable->tableArray[i].start, extTable->tableArray[i].count);
+	}
+    }
+
+    // Mark the directory as unused
+    memset(dirRemove, 0, sizeof(DE));
+
+    // Write to the disk (need to modify)
+    //  LBAwrite();
+
+
 }
 
 fdDir *fs_opendir(const char *pathname)
@@ -148,18 +168,20 @@ fdDir *fs_opendir(const char *pathname)
         return NULL;
     }
 
+    char *pathNameCopy = strdup(pathname);
+
     //call parsePath() to traverse and update ppiTest
-    int parsePathCheck = parsePath(pathname, ppiTest);
+    int parsePathCheck = parsePath(pathNameCopy, ppiTest);
     //printf("return value of parsePath(): %d",  parsePathCheck);
 
     //check if directory with pathname exists
     if(ppiTest->indexOfLastElement != -1){
         
         //check if pathname is a directory
-        if(isDir(&ppiTest->parent[ppiTest->indexOfLastElement])){
+        if(isDirectory(&ppiTest->parent[ppiTest->indexOfLastElement])){
 
             //load directory to initialize it in fdDir struct that will be the return value
-            myDir = loadDir(&ppiTest->parent, ppiTest->indexOfLastElement);
+            myDir = loadDir(ppiTest->parent, ppiTest->indexOfLastElement);
             fdDir *fdd = malloc(sizeof(fdDir));
             
             fdd->directory = myDir;
@@ -203,59 +225,160 @@ char *fs_getcwd(char *pathname, size_t size)
 
 int fs_setcwd(char *pathname)
 {
-    // Set the current working directory
+    // parsepath
+    parsePathInfo ppi;
+    int ppiResult = parsePath(pathname, &ppi);
+    if (ppiResult !=0) return -1;
 
-    // Implementation specific
-    /*
-        strcpy(currentDir, pathname);
-        return 0;
-    */
+    // find index
+    int index = FindEntryInDir(ppi.parent, ppi.lastElement);
+    if (index == -1) return -1;
+
+    // must be directory
+    if (fs_isDir(pathname) != 1) return -1;
+
+    // free the prior current working directory
+    free(cwd);
+
+    // load the new directory
+    cwd = loadDir(ppi.parent, index);
+
+    char *newPath;
+    // Absolute path
+    if (pathname[0] == '/')
+    {
+         newPath = strdup(pathname);
+    }
+    // Relative path
+    // Adjust /. and /..
+    else 
+    {
+        // newPath = cwd + pathname
+
+    }
+
+
 }
+
+
+// fs_isFIle and fs_isDir are similar
+// The difference is  when file: return 0; when dir: return 1;
+// This distinction is written in isDir(DE *dir) a helper function
 
 int fs_isFile(char *filename)
 {
-    // Check if the given filename is a regular file
-    // Implementation specific
-    // Use fsLow.h functions to check the file type
+    parsePathInfo ppi;
+    int ppiResult = parsePath(filename, &ppi);
+    if (ppiResult != 0) return -1;
 
-    // if (LBAread(...)) {
-    //     return 1; // It's a file
-    // } else {
-    //     return 0; // It's not a file
-    // }
-    return 0;
+    int index = FindEntryInDir(ppi.parent, ppi.lastElement);
+    if (index == -1) return -1;
+
+    DE *dir = &(ppi.parent[index]);
+
+    int isFileResult = isDirectory(dir);
+    return isFileResult;
 }
+
 
 int fs_isDir(char *pathname)
 {
+    parsePathInfo ppi;
+    int ppiResult = parsePath(pathname, &ppi);
+    if (ppiResult != 0) return -1;
 
-    // if (LBAread(...)) {
-    //     return 1; // It's a directory
-    // } else {
-    //     return 0; // It's not a directory
-    // }
-    return 0;
+    int index = FindEntryInDir(ppi.parent, ppi.lastElement);
+    if (index == -1) return -1;
+
+    DE *dir = &(ppi.parent[index]);
+    int isDirResult = isDirectory(dir);
+
+    return isDirResult;
+
 }
 
 int fs_delete(char *filename)
 {
+    // ParsePath
+    parsePathInfo ppi;
+    if (parsePath(filename, &ppi) != 0) return -1;
 
-    // if (LBAwrite(...)) {
-    //     return 0; // Deleted successfully
-    // } else {
-    //     return -1; // Deletion failed
-    // }
-    return 0;
+    // find index
+    int index = FindEntryInDir(ppi.parent, ppi.lastElement);
+    if (index == -1) return -1;
+
+    // load the directory to be removed
+    DE *dirRemove = loadDir(ppi.parent, index);
+
+    // check fs_isFile is 0 --> file (must be return file)
+    if (fs_isFile(filename) != 0) return -1;
+
+    // Release the blokcs associated with dirRemove
+    EXTTABLE *extTable = loadExtent(dirRemove);
+
+    for (int i = 0; i < 5; i++)
+    {
+        if (extTable->tableArray[i].count > 0)
+        {
+            releaseBlocks(extTable->tableArray[i].start, extTable->tableArray[i].count);
+        }
+    }
+
+    // Mark the directory as unused
+    memset(dirRemove, 0, sizeof(DE));
+
+    // Write to the disk (need to modify)
+    //  LBAwrite();
+
+
 }
 
-int fs_stat(const char *path, struct fs_stat *buf)
-{
+// *********************** NEED TO CEHCK *******************************
+// This would be used in "ls" and "touch" command?
+// **** dont know how to check ****
+int fs_stat(const char *path, struct fs_stat *buf) {
 
-    // if (LBAread(...)) {
-    //     // Fill in buf with file statistics
-    //     return 0; // Success
-    // } else {
-    //     return -1; // Error
-    // }
+    // Start fs_stat
+    printf("fs_stat : \n\n");
+
+    // need to have 2 valid parameters in fs_stat()
+    if (path == NULL || buf == NULL)
+    {
+        printf("parameters cannot be null\n"); // Fixed function name
+        return -1;
+    }
+
+    // Copy the path into pathCopy
+    char *pathCopy = strdup(path);
+    if (pathCopy == NULL)
+    {
+        printf("Failed to duplicate path string\n");
+        return -1;
+    }
+
+    // Allocate and zero-initialize ppi (parsePathInfo)
+    parsePathInfo *ppi;
+    memset(ppi, 0, sizeof(parsePathInfo));
+
+    int pathResult = parsePath(pathCopy, ppi);
+    free(pathCopy);
+
+
+    DE *entry = NULL;
+
+    if (ppi->indexOfLastElement >= 0 && ppi->parent != NULL) 
+    {
+        entry = &ppi->parent[ppi->indexOfLastElement];
+    }
+
+    buf->st_size = entry->fileSize;
+    buf->st_blksize = BLOCK_SIZE;
+    buf->st_blocks = (entry->fileSize + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    buf->st_accesstime = entry->lastAccessedTime;
+    buf->st_modtime = entry->modifiedTime;
+    buf->st_createtime = entry->createdTime;
+
+    free(ppi->lastElement);
+
     return 0;
 }
