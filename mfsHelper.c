@@ -170,7 +170,7 @@ DE *loadDir(DE *dir, int index)
 		EXTTABLE *ext = loadExtent(*&dir);
 		startBlock = ext[index].tableArray[0].start;
 		//      	printf("start returned: %d\n", startBlock);
-		free(ext);
+		if(ext != NULL) free(ext);
 	}
 
 	DE *newDir = malloc(BLOCK_SIZE);

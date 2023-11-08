@@ -42,7 +42,7 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 
     //initialize a buffer to check for volume control block
     struct VCB *vcb = malloc(BLOCK_SIZE * sizeof(char));
-    struct DE * de = malloc(BLOCK_SIZE);
+  //  struct DE * de = malloc(BLOCK_SIZE);
 
     // LBAread vcb from [0] for 1 block, VCB starts from 0 and is one block
  	if( LBAread(vcb, 1, 0) !=  1)
@@ -99,14 +99,14 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
       	int startDirectory = initDir(DEFAULT_ENTRIES, NULL);
 //        printf("startDirectory: %d\n", startDirectory);
 
-	int returnCheck= LBAread(de, 1, 6);
+//	int returnCheck= LBAread(de, 1, 6);
 //	printf("returnCheck: %d, de[0].fileName: %s\n", returnCheck, de[0].fileName);
 
-	int subDirReturn = initDir(DEFAULT_ENTRIES, *&de);
+//	int subDirReturn = initDir(DEFAULT_ENTRIES, *&de);
 //	printf("subDirReturn: %d\n", subDirReturn);
 
-	releaseBlocks(0, 2);
-	free(de);
+//test only	releaseBlocks(0, 2);
+//	free(de);
     	}
 
     	return 0;
@@ -127,7 +127,8 @@ void exitFileSystem ()
                 exit(1);
                 }
 
-        free(bitmapGlobal);//release freespace
+        if (bitmapGlobal != NULL) free(bitmapGlobal);//release freespace
+	bitmapGlobal=NULL;
 	if(cwd != NULL) free(cwd);
 	if(rootDir != NULL) free(rootDir);
     	printf ("System exiting\n");

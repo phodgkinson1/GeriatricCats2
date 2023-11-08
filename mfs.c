@@ -49,7 +49,7 @@ int fs_mkdir(const char *pathname, mode_t mode)
         EXTTABLE *ext = loadExtent(ppiTest->parent);
         ext[nextAvailable].tableArray[0].start = startBlockNewDir;
         //		printf(" ext[nextAvailable].tableArray[0].start: %d\n",  ext[nextAvailable].tableArray[0].start);
-        free(ext);
+        if(ext != NULL) free(ext);
         // update directory entry name for new directory
         char *copy = ppiTest->lastElement;
         int i = 0;
@@ -68,48 +68,10 @@ int fs_mkdir(const char *pathname, mode_t mode)
         return -1;
     }
     // cleanup
-    free(ppiTest);
+    if(ppiTest != NULL) free(ppiTest);
     return 0;
 }
 
-// someone's notes for below
-
-/*
-
-opendir (path)
-ParsePath (path, ppi)
-if (index != -1)
-{
-        isDirectory (&(ppi->parent[ppi->index]))
-        myDir = loadDir (&(ppi->parent[ppi->index]))
-        fdDir *fdd = malloc(sizeof(fdDir))
-
-        fdd->directory = myDir
-        fdd->directoryPos = 0;
-        fdd->recLen = sizeof(fdDir);
-
-        return (fdd);
-}
-
-readdir (fdDir *fdd)
-{
-        while ((fdd->directory[fdd->directoryPos]) not used)
-        {
-                ++ directoryPos
-                if (directoryPos >= lastpos) return NULL;
-
-                strcpy(fdd->di.name, fdd->directory[fdd->directoryPos].name)
-                fdd->di.type = file || directory
-
-                ++ directoryPos?? again??
-
-                return di
-        }
-}
-
-
-
-*/
 
 
 // Remove empty directory
@@ -129,6 +91,8 @@ int fs_rmdir(const char *pathname)
     // check fs_isDir is 1 --> dir (must be return dir)
     if (fs_isDir((char *)pathname) != 1) return -1;
 
+	//iterate through every entry in dirRemove and make sure empty. if files with name not '\0' then cannot remove return -1.
+
     // check loading directory is empty (must be empty)
     if (dirRemove != NULL) return -1;
 
@@ -143,12 +107,9 @@ int fs_rmdir(const char *pathname)
 	}
     }
 
-    // Mark the directory as unused
-    memset(dirRemove, 0, sizeof(DE));
-
-    // Write to the disk (need to modify)
-    //  LBAwrite();
-
+	//ext = loadExtent()
+	//set ppi.parent[index] info in directory entry to "unused" 0/null/'\0' etc
+	//call releaseBlocks (ext[index]->start, size???)
 
 }
 
@@ -178,7 +139,7 @@ fdDir *fs_opendir(const char *pathname)
     if(ppi->indexOfLastElement != -1){
         
         //check if pathname is a directory
-        if(isDirectory(&ppi->parent[ppi->indexOfLastElement] == 1)){
+        if(isDirectory(&ppi->parent[ppi->indexOfLastElement]) == 1){
 
             //load directory to initialize it in fdDir struct that will be the return value
             myDir = loadDir(ppi->parent, ppi->indexOfLastElement);
@@ -220,10 +181,10 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
     
     //check the type of the directory
     if(isDirectory(dirPath->directory) == 1){
-        dirPath->di->fileType = "Directory";
+        dirPath->di->fileType = 'd';
     }
     else{
-        dirPath->di->fileType = "File";
+        dirPath->di->fileType = 'f';
     }
 
     //update positon for next iteration
