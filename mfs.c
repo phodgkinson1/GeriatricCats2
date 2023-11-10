@@ -203,49 +203,35 @@ int fs_closedir(fdDir *dirPath)
     return 0;
 }
 
-char *fs_getcwd(char *pathname, size_t size)
-{
-    /*
-        strncpy(pathname, currentDir, size);
-        return pathname;
-    */
+char *fs_getcwd(char *pathname, size_t size) {
+    if (size <= 0 || pathname == NULL) {
+        return NULL;
+    }
+
+    // Copy the current directory path into the provided buffer
+    strncpy(pathname, currentDir, size);
+
+    // Ensure the buffer is null-terminated
+    pathname[size - 1] = '\0';
+
+    return pathname;
 }
 
-int fs_setcwd(char *pathname)
-{
-    // parsepath
-    parsePathInfo ppi;
-    int ppiResult = parsePath(pathname, &ppi);
-    if (ppiResult !=0) return -1;
 
-    // find index
-    int index = FindEntryInDir(ppi.parent, ppi.lastElement);
-    if (index == -1) return -1;
-
-    // must be directory
-    if (fs_isDir(pathname) != 1) return -1;
-
-    // free the prior current working directory
-    free(cwd);
-
-    // load the new directory
-    cwd = loadDir(ppi.parent, index);
-
-    char *newPath;
-    // Absolute path
-    if (pathname[0] == '/')
-    {
-         newPath = strdup(pathname);
-    }
-    // Relative path
-    // Adjust /. and /..
-    else 
-    {
-        // newPath = cwd + pathname
-
+int fs_setcwd(char *pathname) {
+    if (pathname == NULL || strlen(pathname) == 0) {
+        return -1;
     }
 
-
+    // Check if the new path is valid (you'll need to implement this validation)
+    if (is_valid_path(pathname)) {
+        // Update the current directory path
+        strncpy(currentDir, pathname, sizeof(currentDir));
+        currentDir[sizeof(currentDir) - 1] = '\0';
+        return 0; // Success
+    } else {
+        return -1; // Invalid path
+    }
 }
 
 
@@ -325,48 +311,26 @@ int fs_delete(char *filename)
 // This would be used in "ls" and "touch" command?
 // **** dont know how to check ****
 int fs_stat(const char *path, struct fs_stat *buf) {
-
-    // Start fs_stat
-    printf("fs_stat : \n\n");
-
-    // need to have 2 valid parameters in fs_stat()
-    if (path == NULL || buf == NULL)
-    {
-        printf("parameters cannot be null\n"); // Fixed function name
-        return -1;
+    if (path == NULL || buf == NULL) {
+        return -1; // Invalid input
     }
 
-    // Copy the path into pathCopy
-    char *pathCopy = strdup(path);
-    if (pathCopy == NULL)
-    {
-        printf("Failed to duplicate path string\n");
-        return -1;
+    // Parse the path to find the file or directory
+    parsePathInfo ppi;
+    if (parsePath(path, &ppi) < 0) {
+        return -1; // Parsing failed
     }
 
-    // Allocate and zero-initialize ppi (parsePathInfo)
-    parsePathInfo *ppi;
-    memset(ppi, 0, sizeof(parsePathInfo));
-
-    int pathResult = parsePath(pathCopy, ppi);
-    free(pathCopy);
-
-
-    DE *entry = NULL;
-
-    if (ppi->indexOfLastElement >= 0 && ppi->parent != NULL) 
-    {
-        entry = &ppi->parent[ppi->indexOfLastElement];
+    // Check if the file or directory specified by 'path' exists
+    int entryIndex = FindEntryInDir(ppi.parent, ppi.lastElement);
+    if (entryIndex < 0) {
+        return -1; // File or directory does not exist
     }
 
-    buf->st_size = entry->fileSize;
-    buf->st_blksize = BLOCK_SIZE;
-    buf->st_blocks = (entry->fileSize + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    buf->st_accesstime = entry->lastAccessedTime;
-    buf->st_modtime = entry->modifiedTime;
-    buf->st_createtime = entry->createdTime;
+    // Fill in 'buf' with file/directory statistics
+    buf->st_size = 0; // Replace with actual file size
+    buf->st_blksize = 512; // Blocksize for file system I/O (modify as needed)
+    buf->st_blocks = 0; // Calculate the number of 512B blocks
 
-    free(ppi->lastElement);
-
-    return 0;
+    return 0; // Success
 }
