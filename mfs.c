@@ -204,6 +204,7 @@ int fs_closedir(fdDir *dirPath)
 }
 
 char *fs_getcwd(char *pathname, size_t size) {
+    printf("fs_getcwd function called\n");
     if (size <= 0 || pathname == NULL) {
         return NULL;
     }
@@ -219,6 +220,7 @@ char *fs_getcwd(char *pathname, size_t size) {
 
 
 int fs_setcwd(char *pathname) {
+    printf("fs_setcwd function called\n");
     if (pathname == NULL || strlen(pathname) == 0) {
         return -1;
     }
@@ -311,6 +313,7 @@ int fs_delete(char *filename)
 // This would be used in "ls" and "touch" command?
 // **** dont know how to check ****
 int fs_stat(const char *path, struct fs_stat *buf) {
+    printf("fs_stat function called with path: %s/n", path);
     if (path == NULL || buf == NULL) {
         return -1; // Invalid input
     }
