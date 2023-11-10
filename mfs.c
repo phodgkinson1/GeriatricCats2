@@ -221,20 +221,16 @@ char *fs_getcwd(char *pathname, size_t size) {
 
 int fs_setcwd(char *pathname) {
     printf("fs_setcwd function called\n");
-    if (pathname == NULL || strlen(pathname) == 0) {
-        return -1;
-    }
-
-    // Check if the new path is valid (you'll need to implement this validation)
-    if (is_valid_path(pathname)) {
-        // Update the current directory path
-        strncpy(currentDir, pathname, sizeof(currentDir));
-        currentDir[sizeof(currentDir) - 1] = '\0';
-        return 0; // Success
-    } else {
+    if (pathname == NULL || strlen(pathname) == 0 || (pathname != NULL && pathname[0] == '\0')) {
         return -1; // Invalid path
     }
+
+    // Update the current directory path
+    strncpy(currentDir, pathname, sizeof(currentDir));
+    currentDir[sizeof(currentDir) - 1] = '\0';
+    return 0; // Success
 }
+
 
 
 // fs_isFIle and fs_isDir are similar
@@ -313,14 +309,14 @@ int fs_delete(char *filename)
 // This would be used in "ls" and "touch" command?
 // **** dont know how to check ****
 int fs_stat(const char *path, struct fs_stat *buf) {
-    printf("fs_stat function called with path: %s/n", path);
+    printf("fs_stat function called with path: %s\n", path);
     if (path == NULL || buf == NULL) {
         return -1; // Invalid input
     }
 
     // Parse the path to find the file or directory
     parsePathInfo ppi;
-    if (parsePath(path, &ppi) < 0) {
+    if (parsePath((char*)path, &ppi) < 0) {
         return -1; // Parsing failed
     }
 
@@ -337,3 +333,4 @@ int fs_stat(const char *path, struct fs_stat *buf) {
 
     return 0; // Success
 }
+
