@@ -258,18 +258,30 @@ int fs_setcwd(char *pathname) {
         strncpy(currentDir, pathname, sizeof(currentDir));
     } else {
         // Relative path
-        char newPath[256];
-        snprintf(newPath, sizeof(newPath), "%s%s", currentDir, pathname);
-        strncpy(currentDir, newPath, sizeof(currentDir));
+
+        // Special case: "."
+        if (strcmp(ppi.lastElement, ".") == 0) {
+            // currentDir remains unchanged
+        }
+        // Special case: ".."
+        else if (strcmp(ppi.lastElement, "..") == 0) {
+            // Remove the last component from currentDir (go up one directory)
+            char *lastSlash = strrchr(currentDir, '/');
+            if (lastSlash != NULL) {
+                *lastSlash = '\0';
+            }
+        } else {
+            // Normal case: construct the new path based on the current directory
+            char newPath[256];
+            snprintf(newPath, sizeof(newPath), "%s%s%s", currentDir, (currentDir[1] == '\0' ? "" : "/"), pathname);
+            strncpy(currentDir, newPath, sizeof(currentDir));
+        }
     }
 
     currentDir[sizeof(currentDir) - 1] = '\0';
 
     return 0; // Success
 }
-
-
-
 
 // fs_isFIle and fs_isDir are similar
 // The difference is  when file: return 0; when dir: return 1;
