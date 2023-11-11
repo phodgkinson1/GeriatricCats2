@@ -139,7 +139,7 @@ fdDir *fs_opendir(const char *pathname)
     printf("return value of parsePath(): %d\n",  parsePathCheck);
 
     //check if directory with pathname exists
-    if(ppi->indexOfLastElement != -1){
+    if(parsePathCheck != -1){
         
         //check if pathname is a directory
         if(isDirectory(&ppi->parent[ppi->indexOfLastElement]) == 1){
@@ -151,6 +151,9 @@ fdDir *fs_opendir(const char *pathname)
             fdd->directory = myDir;
             fdd->dirEntryPosition = 0;
             fdd->d_reclen = sizeof(fdDir);
+
+            free(myDir);
+            free(ppi);
 
             return(fdd);
         }
