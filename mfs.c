@@ -221,15 +221,53 @@ char *fs_getcwd(char *pathname, size_t size) {
 
 int fs_setcwd(char *pathname) {
     printf("fs_setcwd function called\n");
-    if (pathname == NULL || strlen(pathname) == 0 || (pathname != NULL && pathname[0] == '\0')) {
+    if (pathname == NULL || strlen(pathname) == 0) {
         return -1; // Invalid path
     }
 
+    // Parse the path to find the directory entry
+    parsePathInfo ppi;
+    if (parsePath(pathname, &ppi) < 0) {
+        return -1; // Parsing failed
+    }
+
+    // Check if the directory specified by 'pathname' exists
+    int entryIndex = FindEntryInDir(ppi.parent, ppi.lastElement);
+    if (entryIndex < 0) {
+        return -1; // Directory does not exist
+    }
+
+    // Check if the entry is a directory
+    if (isDirectory(&ppi.parent[entryIndex]) != 1) {
+        return -1; // Not a directory
+    }
+
+    // Free resources allocated for the prior current working directory
+    // Assuming that fs_getcwd returns the current directory path
+    char *priorCwd = fs_getcwd(NULL, 0);
+    if (priorCwd != NULL) {
+        free(priorCwd);
+    }
+
+    // Load the new current working directory
+    DE *newCwd = loadDir(ppi.parent, entryIndex);
+
     // Update the current directory path
-    strncpy(currentDir, pathname, sizeof(currentDir));
+    if (pathname[0] == '/') {
+        // Absolute path
+        strncpy(currentDir, pathname, sizeof(currentDir));
+    } else {
+        // Relative path
+        char newPath[256];
+        snprintf(newPath, sizeof(newPath), "%s%s", currentDir, pathname);
+        strncpy(currentDir, newPath, sizeof(currentDir));
+    }
+
     currentDir[sizeof(currentDir) - 1] = '\0';
+
     return 0; // Success
 }
+
 
 
 
