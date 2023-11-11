@@ -115,14 +115,14 @@ int fs_rmdir(const char *pathname)
 
 fdDir *fs_opendir(const char *pathname)
 {
-
-    printf("called fs_opendir with pathname : |%s|\n", pathname);
+    printf("start of fs_opendir with pathname : |%s|\n", pathname);
 
     // initilize a directory and a parsePathInfo struct
     DE *myDir = malloc(sizeof(DE)); // not sure if I need to malloc
+    //printf("fs_opendir after myDir malloc\n");
+
     parsePathInfo *ppi = malloc(sizeof(parsePathInfo)); 
-    
-    printf("fs_opendir after malloc");
+    //printf("fs_opendir after ppi malloc\n");
 
     // Check for NULL pathname
     if (pathname == NULL)
@@ -132,10 +132,11 @@ fdDir *fs_opendir(const char *pathname)
     }
 
     char *pathNameCopy = strdup(pathname);
+    //printf("pathNameCopy: %s\n", pathNameCopy);
 
     //call parsePath() to traverse and update ppiTest
     int parsePathCheck = parsePath(pathNameCopy, ppi);
-    //printf("return value of parsePath(): %d",  parsePathCheck);
+    printf("return value of parsePath(): %d\n",  parsePathCheck);
 
     //check if directory with pathname exists
     if(ppi->indexOfLastElement != -1){
@@ -153,10 +154,12 @@ fdDir *fs_opendir(const char *pathname)
 
             return(fdd);
         }
-
-        free(myDir);
-        free(ppi);
     }
+    printf("End of fs_opendir\n");
+
+    free(myDir);
+    free(ppi);
+
 }
 
 struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
@@ -307,6 +310,7 @@ int fs_isFile(char *filename)
 
 int fs_isDir(char *pathname)
 {
+    printf("Inside fs_isDir with pathname: |%s|\n", pathname);
     parsePathInfo ppi;
     int ppiResult = parsePath(pathname, &ppi);
     if (ppiResult != 0) return -1;
@@ -316,7 +320,9 @@ int fs_isDir(char *pathname)
 
     DE *dir = &(ppi.parent[index]);
     int isDirResult = isDirectory(dir);
-
+    
+    printf("isDirResult: %d\n", isDirResult );
+   
     return isDirResult;
 
 }
