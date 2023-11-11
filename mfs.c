@@ -121,6 +121,8 @@ fdDir *fs_opendir(const char *pathname)
     // initilize a directory and a parsePathInfo struct
     DE *myDir = malloc(sizeof(DE)); // not sure if I need to malloc
     parsePathInfo *ppi = malloc(sizeof(parsePathInfo)); 
+    
+    printf("fs_opendir after malloc");
 
     // Check for NULL pathname
     if (pathname == NULL)
