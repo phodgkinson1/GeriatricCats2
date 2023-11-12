@@ -122,6 +122,17 @@ fdDir *fs_opendir(const char *pathname)
 {
     printf("start of fs_opendir with pathname : |%s|\n", pathname);
 
+    // update pathname with new element
+    char *newDir = malloc(256 * sizeof(char));
+    strcpy(newDir, currentDir);
+    printf("pathname 0 char : |%c|\n", pathname[0] != '/');
+    if (currentDir[strlen(currentDir) - 1] != '/' && pathname[0] != '/')
+    {
+        strcat(newDir, "/");
+    }
+    strcat(newDir, pathname);
+    printf("newdir pathname : |%s|\n", newDir);
+
     // initilize a directory and a parsePathInfo struct
     DE *myDir = malloc(sizeof(DE)); // not sure if I need to malloc
     //printf("fs_opendir after myDir malloc\n");
@@ -136,7 +147,7 @@ fdDir *fs_opendir(const char *pathname)
         return NULL;
     }
 
-    char *pathNameCopy = strdup(pathname);
+    char *pathNameCopy = strdup(newDir);
     //printf("pathNameCopy: %s\n", pathNameCopy);
 
     //call parsePath() to traverse and update ppiTest
