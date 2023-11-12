@@ -58,6 +58,11 @@ int fs_mkdir(const char *pathname, mode_t mode)
             ppiTest->parent[nextAvailable].fileName[i] = copy[i];
             i++;
         }
+
+        // Set isDirectory to 1 for the new directory
+        // isDIrectory attribute initialization issue *****
+        ppiTest->parent[nextAvailable].isDirectory = 1;
+
         //		printf("new filename at  ppiTest->parent[nextAvailable].fileName: |%s|\n",
         //		ppiTest->parent[nextAvailable].fileName);
         printf("Success- directory made\n");
@@ -297,38 +302,54 @@ int fs_setcwd(char *pathname) {
 
 int fs_isFile(char *filename)
 {
-    parsePathInfo ppi;
-    int ppiResult = parsePath(filename, &ppi);
-    if (ppiResult != 0) return -1;
+    parsePathInfo *ppi;
+    ppi = malloc(sizeof(parsePathInfo)); // Allocate and initialize ppi
 
-    int index = FindEntryInDir(ppi.parent, ppi.lastElement);
-    if (index == -1) return -1;
+    if (parsePath(filename, ppi) != 0) {
+        // Parsing failed, assuming not a file
+        return 0;
+    }
 
-    DE *dir = &(ppi.parent[index]);
+    int index = FindEntryInDir(ppi->parent, ppi->lastElement);
+    if (index == -1) {
+        // Entry not found, assuming not a file
+        return 0;
+    }
 
-    int isFileResult = isDirectory(dir);
-    return isFileResult;
+    DE *dirEntry = &(ppi->parent[index]);
+    int result = dirEntry->isDirectory == 0; // Returns 1 if file (isDirectory == 0), 0 otherwise
+
+    printf("result: %d \n", result);
+    free(ppi);
+    return result;
 }
 
 
 int fs_isDir(char *pathname)
 {
-    printf("Inside fs_isDir with pathname: |%s|\n", pathname);
-    parsePathInfo ppi;
-    int ppiResult = parsePath(pathname, &ppi);
-    if (ppiResult != 0) return -1;
+    parsePathInfo *ppi;
+    ppi = malloc(sizeof(parsePathInfo)); // Allocate and initialize ppi
 
-    int index = FindEntryInDir(ppi.parent, ppi.lastElement);
-    if (index == -1) return -1;
+    if (parsePath(pathname, ppi) != 0) {
+        // Parsing failed, assuming not a directory
+        return 0;
+    }
 
-    DE *dir = &(ppi.parent[index]);
-    int isDirResult = isDirectory(dir);
-    
-    printf("isDirResult: %d\n", isDirResult );
-   
-    return isDirResult;
+    int index = FindEntryInDir(ppi->parent, ppi->lastElement);
+    if (index == -1) {
+        // Entry not found, assuming not a directory
+        return 0;
+    }
 
+    DE *dirEntry = &(ppi->parent[index]);
+    int result = dirEntry->isDirectory == 1; // Returns 1 if directory (isDirectory == 1), 0 otherwise
+
+    printf("result: %d \n", result);
+    free(ppi);
+    return result;
 }
+
+
 
 int fs_delete(char *filename)
 {
