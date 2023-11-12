@@ -238,59 +238,40 @@ int fs_setcwd(char *pathname) {
         return -1; // Invalid path
     }
 
-    // Parse the path to find the directory entry
-    parsePathInfo ppi;
-    if (parsePath(pathname, &ppi) < 0) {
-        return -1; // Parsing failed
-    }
+    // Tokenize the path
+    char *token = strtok(pathname, "/");
+    char tokens[256][256]; // 256 tokens with 256 characters each
+    int numTokens = 0;
 
-    // Check if the directory specified by 'pathname' exists
-    int entryIndex = FindEntryInDir(ppi.parent, ppi.lastElement);
-    if (entryIndex < 0) {
-        return -1; // Directory does not exist
-    }
-
-    // Check if the entry is a directory
-    if (isDirectory(&ppi.parent[entryIndex]) != 1) {
-        return -1; // Not a directory
-    }
-
-    // Free resources allocated for the prior current working directory
-    // Assuming that fs_getcwd returns the current directory path
-    char *priorCwd = fs_getcwd(NULL, 0);
-    if (priorCwd != NULL) {
-        free(priorCwd);
-    }
-
-    // Load the new current working directory
-    DE *newCwd = loadDir(ppi.parent, entryIndex);
-
-    // Update the current directory path
-    if (pathname[0] == '/') {
-        // Absolute path
-        strncpy(currentDir, pathname, sizeof(currentDir));
-    } else {
-        // Relative path
-
-        // Special case: "."
-        if (strcmp(ppi.lastElement, ".") == 0) {
-            // currentDir remains unchanged
-        }
-        // Special case: ".."
-        else if (strcmp(ppi.lastElement, "..") == 0) {
+    while (token != NULL && numTokens < 256) {
+        // Handle each token for '.' and '..'
+        if (strcmp(token, ".") == 0) {
+            // Current directory remains unchanged
+        } else if (strcmp(token, "..") == 0) {
             // Remove the last component from currentDir (go up one directory)
             char *lastSlash = strrchr(currentDir, '/');
             if (lastSlash != NULL) {
                 *lastSlash = '\0';
             }
         } else {
-            // Normal case: construct the new path based on the current directory
-            char newPath[256];
-            snprintf(newPath, sizeof(newPath), "%s%s%s", currentDir, (currentDir[1] == '\0' ? "" : "/"), pathname);
-            strncpy(currentDir, newPath, sizeof(currentDir));
+            // Normal case: add the token to the array
+            strcpy(tokens[numTokens], token);
+            numTokens++;
         }
+
+        // Get the next token
+        token = strtok(NULL, "/");
     }
 
+    // Reconstruct the new path based on the tokens
+    char newPath[256] = "";
+    for (int i = 0; i < numTokens; i++) {
+        strcat(newPath, "/");
+        strcat(newPath, tokens[i]);
+    }
+
+    // Update the current directory path
+    strncpy(currentDir, newPath, sizeof(currentDir));
     currentDir[sizeof(currentDir) - 1] = '\0';
 
     return 0; // Success
