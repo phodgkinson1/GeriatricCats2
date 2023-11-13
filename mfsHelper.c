@@ -179,7 +179,7 @@ DE *loadDir(DE *dir, int index)
 		printf("dir loading 1st block LBAread() error!\n");
 		exit(1);
 	}
-	int rootDirSize = newDir[0].fileSize;
+	int rootDirSize = newDir[1].fileSize;
 	int sizeInBlocks = ((rootDirSize + BLOCK_SIZE - 1) / BLOCK_SIZE);
 	//        printf(" dir sizeinblocks: %d\n", sizeInBlocks);
 	if (sizeInBlocks > 1)
