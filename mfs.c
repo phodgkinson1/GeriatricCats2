@@ -44,11 +44,11 @@ int fs_mkdir(const char *pathname, mode_t mode)
             return -1;
         //		printf("next avail: %d\n", nextAvailable);
         int startBlockNewDir = initDir(DEFAULT_ENTRIES, ppiTest->parent);
-        //		printf("startBlockNewDir should be 31 at first call): %d \n", startBlockNewDir);
+ 	printf("startBlockNewDir should be 31 at first call): %d \n", startBlockNewDir);
         // store in extent table for current directory entry in parent
         EXTTABLE *ext = loadExtent(ppiTest->parent);
         ext[nextAvailable].tableArray[0].start = startBlockNewDir;
-        //		printf(" ext[nextAvailable].tableArray[0].start: %d\n",  ext[nextAvailable].tableArray[0].start);
+	printf(" ext[nextAvailable].tableArray[0].start: %d\n",  ext[nextAvailable].tableArray[0].start);
         if(ext != NULL) free(ext);
         // update directory entry name for new directory
         char *copy = ppiTest->lastElement;
@@ -62,9 +62,9 @@ int fs_mkdir(const char *pathname, mode_t mode)
         // Set isDirectory to 1 for the new directory
         // isDIrectory attribute initialization issue *****
         ppiTest->parent[nextAvailable].isDirectory = 1;
-
-        //		printf("new filename at  ppiTest->parent[nextAvailable].fileName: |%s|\n",
-        //		ppiTest->parent[nextAvailable].fileName);
+//	ppiTest->parent[nextAvailable].fileName= 
+        printf("new filename at  ppiTest->parent[nextAvailable].fileName: |%s|\n",
+ 	ppiTest->parent[nextAvailable].fileName);
         printf("Success- directory made\n");
     }
     else
@@ -134,7 +134,7 @@ fdDir *fs_opendir(const char *pathname)
     printf("newdir pathname : |%s|\n", newDir);
 
     // initilize a directory and a parsePathInfo struct
-    DE *myDir = malloc(sizeof(DE)); // not sure if I need to malloc
+    DE *myDir; // not sure if I need to malloc
     //printf("fs_opendir after myDir malloc\n");
 
     parsePathInfo *ppi = malloc(sizeof(parsePathInfo)); 
@@ -147,11 +147,8 @@ fdDir *fs_opendir(const char *pathname)
         return NULL;
     }
 
-    char *pathNameCopy = strdup(newDir);
-    //printf("pathNameCopy: %s\n", pathNameCopy);
-
     //call parsePath() to traverse and update ppiTest
-    int parsePathCheck = parsePath(pathNameCopy, ppi);
+    int parsePathCheck = parsePath(newDir, ppi);
     printf("return value of parsePath(): %d\n",  parsePathCheck);
 
     //check if directory with pathname exists

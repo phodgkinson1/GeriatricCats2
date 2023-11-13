@@ -16,7 +16,7 @@ int initDir(int defaultEntries, struct DE * parent)
 
 //	printf("size Directory entry: %ld\n", sizeof(struct DE));
 	//fill parent given (".") with location returned from allocateBlocks- should be block 7
-//	printf("\nINITDIR CALLED\n");
+	printf("\nINITDIR CALLED\n");
 	int bytesNeeded = defaultEntries * sizeof(DE);
 	int blocksNeeded = ((bytesNeeded + BLOCK_SIZE -1) / BLOCK_SIZE);
 	bytesNeeded = blocksNeeded * BLOCK_SIZE;
@@ -55,7 +55,7 @@ int initDir(int defaultEntries, struct DE * parent)
                 dir[i].lastAccessedTime = t;
                 dir[i].isDirectory = 0;
 
-//                printf("filename: %c\n", dir[i].fileName[i]);
+//                printf("filename: %c\n", dir[i].fileName[0]);
                 }
 
 	//initiate entyr 0 and 1
@@ -130,7 +130,7 @@ int initDir(int defaultEntries, struct DE * parent)
                 dir[1].modifiedTime = t;
                 dir[1].lastAccessedTime = t;
                 dir[1].isDirectory = 1;
-//                printf("dir[1].extentStart: %d\n", dir[1].extentBlockStart);
+                printf("dir[1].extentStart: %d\n", dir[1].extentBlockStart);
 		}
 
 

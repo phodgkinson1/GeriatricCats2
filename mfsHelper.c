@@ -136,10 +136,10 @@ int isDirectory(DE *dir)
 // load an extent table for a directory to retreive locations of directory entry items
 EXTTABLE *loadExtent(DE *dir)
 {
-	//	printf("loadExtent called \n");
-	int extStart = dir[0].extentBlockStart;
-	int numEntries = dir[0].fileSize / sizeof(DE);
-	//      printf("extent for dir starts at block %d\n" extStart);
+	printf("loadExtent called \n");
+	int extStart = dir[1].extentBlockStart;
+	int numEntries = dir[1].fileSize / sizeof(DE);
+	printf("extent for dir starts at block %d\n", extStart);
 	int bytesNeeded = numEntries * sizeof(EXTTABLE);
 	int blocksNeeded = ((bytesNeeded + BLOCK_SIZE - 1) / BLOCK_SIZE);
 	bytesNeeded = blocksNeeded * BLOCK_SIZE;
@@ -156,7 +156,7 @@ EXTTABLE *loadExtent(DE *dir)
 // Loads a directory from disk into memory
 DE *loadDir(DE *dir, int index)
 {
-	//	printf("loadDir called\n");
+	printf("loadDir called, with index: %d\n", index);
 	int startBlock;
 
 	// if loading root
@@ -167,9 +167,9 @@ DE *loadDir(DE *dir, int index)
 
 	else
 	{
-		EXTTABLE *ext = loadExtent(*&dir);
+		EXTTABLE *ext = loadExtent(dir);
 		startBlock = ext[index].tableArray[0].start;
-		//      	printf("start returned: %d\n", startBlock);
+		printf("extent table start returned for loading dir: %d\n", startBlock);
 		if(ext != NULL) free(ext);
 	}
 
@@ -181,7 +181,7 @@ DE *loadDir(DE *dir, int index)
 	}
 	int rootDirSize = newDir[1].fileSize;
 	int sizeInBlocks = ((rootDirSize + BLOCK_SIZE - 1) / BLOCK_SIZE);
-	//        printf(" dir sizeinblocks: %d\n", sizeInBlocks);
+        printf(" dir sizeinblocks: %d\n", sizeInBlocks);
 	if (sizeInBlocks > 1)
 	{
 		free(newDir);
