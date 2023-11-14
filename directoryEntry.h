@@ -26,6 +26,6 @@ typedef struct DE
 } DE;
 
 // Initialize a new directory
-int initDir(int defaultEntries, DE *parent);
+int initDir(int defaultEntries, DE *parent, int parentIndex);
 
 #endif // DIRECTORY_ENTRY_H

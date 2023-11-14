@@ -16,7 +16,8 @@ typedef struct parsePathInfo
 
 } parsePathInfo;
 
-int writeDir(DE * dir);
+int writeExtent(DE * dir, EXTTABLE * ext);
+int writeDir(DE * dir, int location);
 int parsePath(char * path, parsePathInfo * ppi);
 int FindEntryInDir(DE * dir, char * fileName);
 int isDirectory(DE * entry);

@@ -29,7 +29,7 @@ typedef struct EXTTABLE
 // Function declarations
 int initFreeSpace(int blockCount, int bytesPerBlock);
 int loadFreeSpace(int blockCount, int bytesPerBlock);
-int initExtent(int entries);
+int initExtent(int entries, int dirLocation);
 EXTENT * allocateBlocks(int required, int minPerExtent);
 void releaseBlocks(int start, int count);
 

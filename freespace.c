@@ -124,7 +124,7 @@ int loadFreeSpace (int blockCount, int bytesPerBlock)
 
 
 //init and extent block for every directory
-int initExtent(int entries)
+int initExtent(int entries, int dirLocation)
 	{
 	printf("initExtent() called with %d entries!\n", entries);
 //	printf("sizeof extTable %ld\n", sizeof(extTable));
@@ -146,7 +146,9 @@ int initExtent(int entries)
 		}
 
 	EXTTABLE * extentBlock = malloc(bytesNeeded);
-
+	extentBlock[1].tableArray[0].start= dirLocation;
+	printf("storing %d at extBlock[1].tableArray[0].start- confirmed: %d\n", 
+	dirLocation, extentBlock[1].tableArray[0].start);
 /*
 	//extent table fill/print check routine
 	for (int i = 0; i < entries; i++)

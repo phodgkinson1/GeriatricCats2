@@ -42,14 +42,22 @@ int fs_mkdir(const char *pathname, mode_t mode)
         int nextAvailable = FindEntryInDir(ppiTest->parent, empty);
         if (nextAvailable == -1)
             return -1;
-        int startBlockNewDir = initDir(DEFAULT_ENTRIES, ppiTest->parent);
+
+	//load parent
+        int startBlockNewDir = initDir(DEFAULT_ENTRIES, ppiTest->parent, nextAvailable);
  	printf("in mkdir startBlockNewDir: %d \n", startBlockNewDir);
-        // store in extent table for current directory entry in parent
+
+        // load parent extent block
         EXTTABLE *ext = loadExtent(ppiTest->parent);
+
+	//set parent's extent with start of new dir
         ext[nextAvailable].tableArray[0].start = startBlockNewDir;
-	printf(" ext[%d].tableArray[0].start: %d\n", nextAvailable, ext[nextAvailable].tableArray[0].start);
-	//problem is writeDir needs to load location from extent, so writeExtent extent has to be called first or else we get old location
-	//write extent call need number of entries in directory or block size of extent 										******to do
+	printf("ROOT PARENT ext[%d].tableArray[0].start: %d\n", nextAvailable, ext[nextAvailable].tableArray[0].start);
+	int parentDirStart= ext[1].tableArray[0].start;
+	printf("parent directory start block from extent table: %d\n", ext[1].tableArray[0].start);
+	//write parent's extent
+	writeExtent(ppiTest->parent, ext);
+
         // update directory entry name for new directory
         char *copy = ppiTest->lastElement;
         int i = 0;
@@ -58,15 +66,11 @@ int fs_mkdir(const char *pathname, mode_t mode)
             ppiTest->parent[nextAvailable].fileName[i] = copy[i];
             i++;
         }
+ 	printf("new filename at  ppiTest->parent[nextAvailable].fileName: |%s|\n",
+        ppiTest->parent[nextAvailable].fileName);
 
-        // Set isDirectory to 1 for the new directory
-        // isDIrectory attribute initialization issue *****
-        ppiTest->parent[nextAvailable].isDirectory = 1;
-        printf("new filename at  ppiTest->parent[nextAvailable].fileName: |%s|\n",
- 	ppiTest->parent[nextAvailable].fileName);
-        printf("Success- directory made\n");
-
- 	writeDir(ppiTest->parent);
+	printf("inside mk dir- parent[2] startextentblock: %d\n", ppiTest->parent[nextAvailable].extentBlockStart);
+ 	writeDir(ppiTest->parent, parentDirStart);
    	if(ext != NULL) free(ext);
 
     }
@@ -238,7 +242,8 @@ int fs_closedir(fdDir *dirPath)
 }
 
 char *fs_getcwd(char *pathname, size_t size) {
-    printf("fs_getcwd function called\n");
+
+/*    printf("fs_getcwd function called\n");
     if (size <= 0 || pathname == NULL) {
         return NULL;
     }
@@ -248,7 +253,7 @@ char *fs_getcwd(char *pathname, size_t size) {
 
     // Ensure the buffer is null-terminated
     pathname[size - 1] = '\0';
-
+*/
     return pathname;
 }
 
@@ -349,7 +354,7 @@ int fs_isDir(char *pathname)
     int result = dirEntry->isDirectory == 1; // Returns 1 if directory (isDirectory == 1), 0 otherwise
 
     printf("result: %d \n", result);
-    printf("Dir removed\n");
+ //   printf("Dir removed\n");
 
     free(ppi);
     return result;

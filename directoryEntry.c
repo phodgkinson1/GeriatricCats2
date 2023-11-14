@@ -9,8 +9,9 @@
 // **** THIS SHOULD BE CHEKCED.
 // Does not work unless extent *allocateBlock() function is implemented and extent table works
 // Also de * --> DE array in pointer type *****
-int initDir(int defaultEntries, struct DE * parent)
+int initDir(int defaultEntries, struct DE * parent, int parentIndex)
 {
+	printf("inside initDir, passed parentIndex: %d\n", parentIndex);
         struct DE *p = parent;  // Declare p here to make it accessible in the if-else blocks
 //        printf("p filename: %s\n", p->fileName);
 
@@ -25,7 +26,8 @@ int initDir(int defaultEntries, struct DE * parent)
 
 
 	EXTENT * tempArray = allocateBlocks(blocksNeeded, blocksNeeded);
-	int dirExtentBlock= initExtent(actualDirEntries);
+	int dirStart= tempArray[0].start;
+	int dirExtentBlock= initExtent(actualDirEntries, dirStart);
 //	printf("In initDir tempArray returned of extent *. length tempArray: %ld, value of tempArray[0] start: %d count: %d\n", 
 //	sizeof(tempArray) / sizeof(tempArray[0]), tempArray[0].start, tempArray[0].count);
 
@@ -35,8 +37,6 @@ int initDir(int defaultEntries, struct DE * parent)
 		p = NULL;
 		return -1;
 		}
-
-	int dirStart= tempArray[0].start;
 
         // dir can be used as an array since it is pointer
         struct DE *dir = malloc(bytesNeeded);
@@ -131,6 +131,16 @@ int initDir(int defaultEntries, struct DE * parent)
                 dir[1].lastAccessedTime = t;
                 dir[1].isDirectory = 1;
                 printf("initDir- dir[1].extentBlockStart: %d\n", dir[1].extentBlockStart);
+
+		//update parent's entry at index with same information
+                p[parentIndex].fileSize = bytesNeeded;
+                p[parentIndex].extentBlockStart= dirExtentBlock;
+                p[parentIndex].extentIndex =parentIndex;
+                p[parentIndex].createdTime = t;
+                p[parentIndex].modifiedTime = t;
+                p[parentIndex].lastAccessedTime = t;
+                p[parentIndex].isDirectory = 1;
+                printf("initDir- parent[parentIndex=2].extentBlockStart: %d\n", p[parentIndex].extentBlockStart);
 		}
 
 
@@ -141,7 +151,6 @@ int initDir(int defaultEntries, struct DE * parent)
 		exit(1);
 		}
 
-	if(p) p = NULL;
 	free(dir);
 	dir = NULL;
 	free(tempArray);
