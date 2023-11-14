@@ -25,7 +25,7 @@ int initDir(int defaultEntries, struct DE * parent, int parentIndex)
 //	printf("byteNeeded: %d, blocksNeeded: %d, actualDirEntries: %d\n", bytesNeeded, blocksNeeded, actualDirEntries);
 
 
-	EXTENT * tempArray = allocateBlocks(blocksNeeded, blocksNeeded);
+	EXTENT *tempArray = allocateBlocks(blocksNeeded, blocksNeeded);
 	int dirStart= tempArray[0].start;
 	int dirExtentBlock= initExtent(actualDirEntries, dirStart);
 //	printf("In initDir tempArray returned of extent *. length tempArray: %ld, value of tempArray[0] start: %d count: %d\n", 
@@ -64,7 +64,7 @@ int initDir(int defaultEntries, struct DE * parent, int parentIndex)
                 // Initialize  . and .. manually
 
         	// If there's no parent (root directory), set p to the root directory entry
-        	p = &dir[0];  // Removed the struct DE * declaration
+        	p = &dir[0];
         	// Initialize "." entry
         	strcpy(p->fileName, ".");
         	p->fileSize = bytesNeeded;
@@ -106,6 +106,7 @@ int initDir(int defaultEntries, struct DE * parent, int parentIndex)
 //                printf("else root copy returnCheck: %d, rootDir[0].fileName: %s\n", returnCheck, rootDirCp[0].fileName);
                 struct DE * r = &rootDirCp[0];
 
+
                 strcpy(dir[0].fileName, ".");
 		dir[0].fileSize= (r->fileSize);
    		dir[0].extentBlockStart= r-> extentBlockStart;
@@ -114,7 +115,8 @@ int initDir(int defaultEntries, struct DE * parent, int parentIndex)
                 dir[0].modifiedTime = r->modifiedTime;
                 dir[0].lastAccessedTime = r->lastAccessedTime;
                 dir[0].isDirectory = r->isDirectory;
-		free(rootDirCp);
+		if(rootDirCp) free(rootDirCp);
+		rootDirCp=NULL;
 		r = NULL;
 //              printf("dir[0].extentStart: %d\n", dir[0].extentBlockStart);
 
@@ -143,7 +145,6 @@ int initDir(int defaultEntries, struct DE * parent, int parentIndex)
                 printf("initDir- parent[parentIndex=2].extentBlockStart: %d\n", p[parentIndex].extentBlockStart);
 		}
 
-
         // Now write it to disk
   	if(LBAwrite(dir, blocksNeeded, dirStart) != blocksNeeded)
 		{
@@ -151,9 +152,9 @@ int initDir(int defaultEntries, struct DE * parent, int parentIndex)
 		exit(1);
 		}
 
-	free(dir);
+	if(dir) free(dir);
 	dir = NULL;
-	free(tempArray);
+	if (tempArray) free(tempArray);
 	//return start of directory location
 	return dirStart;
 }

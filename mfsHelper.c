@@ -46,6 +46,7 @@ int parsePath(char *path, parsePathInfo *ppi)
 
 	parent = startDir;
 
+	DE * temp;
 		printf("parent[0]:|%s| filesize: %d _____ parent[1]: |%s| filesize: %d \n", parent[0].fileName,
 		parent[0].fileSize, parent[1].fileName, parent[1].fileSize);
 
@@ -56,7 +57,7 @@ int parsePath(char *path, parsePathInfo *ppi)
 	if (token1 == NULL)
 	{
 		if (strcmp(path, "/") == 0)
-		{
+		{	startDir=NULL;
 			ppi->indexOfLastElement = -1;
 			ppi->lastElement = NULL;
 			ppi->parent = NULL;
@@ -73,6 +74,7 @@ int parsePath(char *path, parsePathInfo *ppi)
 													// if reached last directory in our path before creating a new one
 		if (token2 == NULL)							// at end
 		{
+			
 			ppi->indexOfLastElement = index;
 			ppi->parent = parent;
 			ppi->lastElement = strdup(token1);
@@ -88,7 +90,7 @@ int parsePath(char *path, parsePathInfo *ppi)
 			return -2; // 2 Helper function
 
 		// load memory for new directory using index in current parent
-		DE *temp = loadDir(parent, index);
+		temp = loadDir(parent, index);
 
 		// release current parent if not equal to the root directory or current working directory
 		// note- we are only in root directory or current directory in first while loop or last while loop.
@@ -246,6 +248,6 @@ DE *loadDir(DE *dir, int index)
                         }
 		printf("inside loadDir, extentBlockStart at newDir: %d\n", newDir[1].extentBlockStart);
 	}
-	free(dir);
+	if(dir != NULL) free(dir);
 	return newDir;
 }

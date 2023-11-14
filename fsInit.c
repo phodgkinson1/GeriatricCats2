@@ -93,10 +93,11 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
                 exit(1);
                 }
 
-        free(vcb);
+        if(vcb) free(vcb);
+	vcb=NULL;
 
 	// (3) Initialize root directory
-      	int startDirectory = initDir(DEFAULT_ENTRIES, NULL);
+      	int startDirectory = initDir(DEFAULT_ENTRIES, NULL, 0);
 //        printf("startDirectory: %d\n", startDirectory);
 
 //	int returnCheck= LBAread(de, 1, 6);

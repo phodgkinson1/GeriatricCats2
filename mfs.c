@@ -15,8 +15,9 @@ int fs_mkdir(const char *pathname, mode_t mode)
 
     // update pathname
     printf("called fs_mkdr with pathname : |%s|\n", pathname);
+
     // update pathname with new element
-    char *newDir = malloc(256 * sizeof(char));
+    char *newDir = malloc(256);
     strcpy(newDir, currentDir);
     printf("pathname 0 char : |%c|\n", pathname[0] != '/');
     if (currentDir[strlen(currentDir) - 1] != '/' && pathname[0] != '/')
@@ -32,6 +33,8 @@ int fs_mkdir(const char *pathname, mode_t mode)
     // parsePath returns 0 if valid path for a directory, -2 if invalid
     int pathValidity = parsePath(newDir, ppiTest);
     //	printf("parsePath returned : %d\n", pathValidity);
+	if(newDir !=NULL) free(newDir);
+
 
     if (pathValidity == 0)
     {
@@ -66,6 +69,7 @@ int fs_mkdir(const char *pathname, mode_t mode)
             ppiTest->parent[nextAvailable].fileName[i] = copy[i];
             i++;
         }
+	copy=NULL;
  	printf("new filename at  ppiTest->parent[nextAvailable].fileName: |%s|\n",
         ppiTest->parent[nextAvailable].fileName);
 
@@ -79,9 +83,15 @@ int fs_mkdir(const char *pathname, mode_t mode)
         printf("\n Invalid path!\n");
         return -1;
     }
-    // cleanup
-    if(ppiTest != NULL) free(ppiTest);
-    return 0;
+
+    	// cleanup
+	if(ppiTest!=NULL)
+		{
+		free(ppiTest);
+		ppiTest=NULL;
+    		}
+
+	return 0;
 }
 
 
@@ -150,11 +160,8 @@ fdDir *fs_opendir(const char *pathname)
     printf("newdir pathname : |%s|\n", newDir);
 
     // initilize a directory and a parsePathInfo struct
-    DE *myDir; // not sure if I need to malloc
-    //printf("fs_opendir after myDir malloc\n");
-
-    parsePathInfo *ppi = malloc(sizeof(parsePathInfo)); 
-    //printf("fs_opendir after ppi malloc\n");
+    DE *myDir;
+    parsePathInfo *ppi = malloc(sizeof(parsePathInfo));
 
     // Check for NULL pathname
     if (pathname == NULL)
@@ -163,7 +170,7 @@ fdDir *fs_opendir(const char *pathname)
         return NULL;
     }
 
-    //call parsePath() to traverse and update ppiTest
+    //call parsePath() to traverse and update ppi
     int parsePathCheck = parsePath(newDir, ppi);
     printf("return value of parsePath(): %d\n",  parsePathCheck);
 
@@ -181,17 +188,15 @@ fdDir *fs_opendir(const char *pathname)
             fdd->dirEntryPosition = 0;
             fdd->d_reclen = sizeof(fdDir);
 
-            free(myDir);
-            free(ppi);
-
             return(fdd);
         }
     }
     printf("End of fs_opendir\n");
 
-    free(myDir);
-    free(ppi);
-
+	if(myDir) free(myDir);
+	myDir=NULL;
+    	if(ppi) free(ppi);
+	ppi=NULL;
 }
 
 struct fs_diriteminfo *fs_readdir(fdDir *dirPath)

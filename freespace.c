@@ -136,7 +136,7 @@ int initExtent(int entries, int dirLocation)
 
         EXTENT * tempArray = allocateBlocks(blocksNeeded, blocksNeeded);
 	int extentTableStart= tempArray[0].start;
-	free(tempArray);
+	if(tempArray !=NULL) free(tempArray);
 	printf("extTableStart: %d\n", extentTableStart);
 
 	if(extentTableStart == -1)
@@ -168,7 +168,7 @@ int initExtent(int entries, int dirLocation)
 		exit(1);
 		}
 
-	free(extentBlock);
+	if(extentBlock != NULL) free(extentBlock);
 	return extentTableStart;
 	}
 
@@ -216,10 +216,8 @@ EXTENT * allocateBlocks (int required, int minPerExtent)
 					//one full extent
 				if(minPerExtent == count)
                                         {
-					EXTENT e;
-					e.start = start;
-					e.count = count;
-                                        tempArray[tempArrayIndex] = e;
+					tempArray[tempArrayIndex].start= start;
+                                        tempArray[tempArrayIndex].count= count;
 //                                        printf("extent made ->start: %d, ->count: %d\n", tempArray[tempArrayIndex].start, tempArray[tempArrayIndex].count);
 					tempArrayIndex++;
 					total -= count;
@@ -315,7 +313,7 @@ EXTENT * allocateBlocks (int required, int minPerExtent)
 		if(total > 0)
 			{
 			printf("no space for %d blocks\n", required);
-			free(tempArray);
+			if(tempArray !=NULL) free(tempArray);
 			tempArray=NULL;
 			}
 

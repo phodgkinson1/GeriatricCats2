@@ -4,9 +4,9 @@
 #include "directoryEntry.h"
 
 // Global variables
-DE * rootDir;
-DE * cwd;
-int cwdGlobal;
+extern DE * rootDir;
+extern DE * cwd;
+extern int cwdGlobal;
 
 typedef struct parsePathInfo
 {
