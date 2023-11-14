@@ -42,14 +42,14 @@ int fs_mkdir(const char *pathname, mode_t mode)
         int nextAvailable = FindEntryInDir(ppiTest->parent, empty);
         if (nextAvailable == -1)
             return -1;
-        //		printf("next avail: %d\n", nextAvailable);
         int startBlockNewDir = initDir(DEFAULT_ENTRIES, ppiTest->parent);
- 	printf("startBlockNewDir should be 31 at first call): %d \n", startBlockNewDir);
+ 	printf("in mkdir startBlockNewDir: %d \n", startBlockNewDir);
         // store in extent table for current directory entry in parent
         EXTTABLE *ext = loadExtent(ppiTest->parent);
         ext[nextAvailable].tableArray[0].start = startBlockNewDir;
-	printf(" ext[nextAvailable].tableArray[0].start: %d\n",  ext[nextAvailable].tableArray[0].start);
-        if(ext != NULL) free(ext);
+	printf(" ext[%d].tableArray[0].start: %d\n", nextAvailable, ext[nextAvailable].tableArray[0].start);
+	//problem is writeDir needs to load location from extent, so writeExtent extent has to be called first or else we get old location
+	//write extent call need number of entries in directory or block size of extent 										******to do
         // update directory entry name for new directory
         char *copy = ppiTest->lastElement;
         int i = 0;
@@ -62,10 +62,13 @@ int fs_mkdir(const char *pathname, mode_t mode)
         // Set isDirectory to 1 for the new directory
         // isDIrectory attribute initialization issue *****
         ppiTest->parent[nextAvailable].isDirectory = 1;
-//	ppiTest->parent[nextAvailable].fileName= 
         printf("new filename at  ppiTest->parent[nextAvailable].fileName: |%s|\n",
  	ppiTest->parent[nextAvailable].fileName);
         printf("Success- directory made\n");
+
+ 	writeDir(ppiTest->parent);
+   	if(ext != NULL) free(ext);
+
     }
     else
     {
@@ -185,7 +188,7 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
     // Return NULL if there are no more entries
 
     printf("Inside fs_readdir\n");
-
+/*
     int directoryEntries = dirPath->directory[0].fileSize / sizeof(DE);
     
     //in the other section he used a for loop
@@ -212,6 +215,7 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
     dirPath->dirEntryPosition++;
     
     return dirPath->di;
+	*/
 }
 
 int fs_closedir(fdDir *dirPath)

@@ -45,7 +45,7 @@ int initDir(int defaultEntries, struct DE * parent)
         for (int i = 2; i < actualDirEntries; i++)
                 {
                 // Initialize each entry to unused
-                dir[i].fileName[i]= '\0'; // Null-terminated name
+                dir[i].fileName[0]= '\0'; // Null-terminated name
 		dir[i].fileSize = 0;
     		dir[i].extentBlockStart= dirExtentBlock;
         	dir[i].extentIndex=i;
@@ -130,7 +130,7 @@ int initDir(int defaultEntries, struct DE * parent)
                 dir[1].modifiedTime = t;
                 dir[1].lastAccessedTime = t;
                 dir[1].isDirectory = 1;
-                printf("dir[1].extentStart: %d\n", dir[1].extentBlockStart);
+                printf("initDir- dir[1].extentBlockStart: %d\n", dir[1].extentBlockStart);
 		}
 
 
