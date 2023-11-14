@@ -11,40 +11,44 @@ static char currentDir[256] = ""; // Initialize with root directory
 // note! int cwdGlobal can be referenced from mfsHelper.h and must be updated with block number of start of current working directory
 
 int fs_mkdir(const char *pathname, mode_t mode)
-{
+	{
+    	// update pathname
+    	printf("called fs_mkdr with pathname : |%s|\n", pathname);
 
-    // update pathname
-    printf("called fs_mkdr with pathname : |%s|\n", pathname);
+	// update pathname with new element
+    	char *newDir = malloc(256);
+    	strcpy(newDir, currentDir);
+    	printf("pathname 0 char : |%c|\n", pathname[0] != '/');
+    	if (currentDir[strlen(currentDir) - 1] != '/' && pathname[0] != '/')
+    		{
+        	strcat(newDir, "/");
+    		}
+    	strcat(newDir, pathname);
+    	printf("newdir pathname : |%s|\n", newDir);
 
-    // update pathname with new element
-    char *newDir = malloc(256);
-    strcpy(newDir, currentDir);
-    printf("pathname 0 char : |%c|\n", pathname[0] != '/');
-    if (currentDir[strlen(currentDir) - 1] != '/' && pathname[0] != '/')
-    {
-        strcat(newDir, "/");
-    }
-    strcat(newDir, pathname);
-    printf("newdir pathname : |%s|\n", newDir);
-
-    parsePathInfo *ppiTest = malloc(sizeof(parsePathInfo));
-    //	ppiTest->lastElement[0]= 'E';
-
-    // parsePath returns 0 if valid path for a directory, -2 if invalid
-    int pathValidity = parsePath(newDir, ppiTest);
-    //	printf("parsePath returned : %d\n", pathValidity);
+    	parsePathInfo *ppiTest = malloc(sizeof(parsePathInfo));
+    				//ppiTest->lastElement[0]= 'E';test for structure passing
+    	// parsePath returns 0 if valid path for a directory, -2 if invalid
+    	int pathValidity = parsePath(newDir, ppiTest);
+    	//	printf("parsePath returned : %d\n", pathValidity);
 	if(newDir !=NULL) free(newDir);
 
+	if (pathValidity != 0)
+    		{
+		printf("Invalid path!\n");
+		return -1;
+		}
 
-    if (pathValidity == 0)
-    {
-        //		printf("ppi members- parent->filesize: %d, lastElement[0]: %s, indexOfLastElement: %d\n",
-        //		ppiTest->parent->fileSize, ppiTest->lastElement, ppiTest->indexOfLastElement);
+        //printf("ppi members- parent->filesize: %d, lastElement[0]: %s, indexOfLastElement: %d\n",
+        //ppiTest->parent->fileSize, ppiTest->lastElement, ppiTest->indexOfLastElement);
         char *empty = malloc(1);
         empty[0] = '\0';
-        int nextAvailable = FindEntryInDir(ppiTest->parent, empty);
+	int nextAvailable = FindEntryInDir(ppiTest->parent, empty);
         if (nextAvailable == -1)
-            return -1;
+		{
+		printf("Directory at capacity.\n");
+		return -1;
+		}
 
 	//load parent
         int startBlockNewDir = initDir(DEFAULT_ENTRIES, ppiTest->parent, nextAvailable);
@@ -60,29 +64,22 @@ int fs_mkdir(const char *pathname, mode_t mode)
 	printf("parent directory start block from extent table: %d\n", ext[1].tableArray[0].start);
 	//write parent's extent
 	writeExtent(ppiTest->parent, ext);
+        if(ext != NULL) free(ext);
 
         // update directory entry name for new directory
         char *copy = ppiTest->lastElement;
         int i = 0;
         while (copy[i])
-        {
-            ppiTest->parent[nextAvailable].fileName[i] = copy[i];
-            i++;
-        }
+        	{
+            	ppiTest->parent[nextAvailable].fileName[i] = copy[i];
+            	i++;
+        	}
 	copy=NULL;
  	printf("new filename at  ppiTest->parent[nextAvailable].fileName: |%s|\n",
         ppiTest->parent[nextAvailable].fileName);
 
 	printf("inside mk dir- parent[2] startextentblock: %d\n", ppiTest->parent[nextAvailable].extentBlockStart);
  	writeDir(ppiTest->parent, parentDirStart);
-   	if(ext != NULL) free(ext);
-
-    }
-    else
-    {
-        printf("\n Invalid path!\n");
-        return -1;
-    }
 
     	// cleanup
 	if(ppiTest!=NULL)
@@ -91,8 +88,8 @@ int fs_mkdir(const char *pathname, mode_t mode)
 		ppiTest=NULL;
     		}
 
-	return 0;
-}
+	return 1;
+	}
 
 
 
@@ -145,59 +142,68 @@ int fs_rmdir(const char *pathname)
 }
 
 fdDir *fs_opendir(const char *pathname)
-{
-    printf("start of fs_opendir with pathname : |%s|\n", pathname);
+	{
+    	printf("start of fs_opendir with pathname : |%s|\n", pathname);
 
-    // update pathname with new element
-    char *newDir = malloc(256 * sizeof(char));
-    strcpy(newDir, currentDir);
-    printf("pathname 0 char : |%c|\n", pathname[0] != '/');
-    if (currentDir[strlen(currentDir) - 1] != '/' && pathname[0] != '/')
-    {
-        strcat(newDir, "/");
-    }
-    strcat(newDir, pathname);
-    printf("newdir pathname : |%s|\n", newDir);
+    	// update pathname with new element
+    	char *newDir = malloc(256 * sizeof(char));
+    	strcpy(newDir, currentDir);
+    	printf("pathname 0 char : |%c|\n", pathname[0] != '/');
+    	if (currentDir[strlen(currentDir) - 1] != '/' && pathname[0] != '/')
+    		{
+        	strcat(newDir, "/");
+    		}
+    	strcat(newDir, pathname);
+    	printf("newdir pathname : |%s|\n", newDir);
 
-    // initilize a directory and a parsePathInfo struct
-    DE *myDir;
-    parsePathInfo *ppi = malloc(sizeof(parsePathInfo));
+    	// initilize a directory and a parsePathInfo struct
+    	DE *myDir;
+    	parsePathInfo *ppi = malloc(sizeof(parsePathInfo));
 
-    // Check for NULL pathname
-    if (pathname == NULL)
-    {
-        printf("Directory Not Found");
-        return NULL;
-    }
+    	// Check for NULL pathname
+    	if (pathname == NULL)
+    		{
+        	printf("Directory Not Found");
+        	return NULL;
+    		}
 
-    //call parsePath() to traverse and update ppi
-    int parsePathCheck = parsePath(newDir, ppi);
-    printf("return value of parsePath(): %d\n",  parsePathCheck);
+    	//call parsePath() to traverse and update ppi
+    	int parsePathCheck = parsePath(newDir, ppi);
+    	printf("return value of parsePath(): %d\n",  parsePathCheck);
 
-    //check if directory with pathname exists
-    if(parsePathCheck != -1){
-        
+    	//check if directory with pathname exists
+    	if(parsePathCheck != 0)
+		{
+		printf("Invalid path!\n");
+		return NULL;
+		}
+
         //check if pathname is a directory
-        if(isDirectory(&ppi->parent[ppi->indexOfLastElement]) == 1){
+	if(isDirectory(&ppi->parent[ppi->indexOfLastElement]) == 0)
+		{
+		printf("%s is not a directory\n", ppi->lastElement);
+		return NULL;
+		}
 
-            //load directory to initialize it in fdDir struct that will be the return value
-            myDir = loadDir(ppi->parent, ppi->indexOfLastElement);
-            fdDir *fdd = malloc(sizeof(fdDir));
-            
-            fdd->directory = myDir;
-            fdd->dirEntryPosition = 0;
-            fdd->d_reclen = sizeof(fdDir);
+        //load directory to initialize it in fdDir struct that will be the return value
+        myDir = loadDir(ppi->parent, ppi->indexOfLastElement);
+        fdDir *fdd = malloc(sizeof(fdDir));
 
-            return(fdd);
-        }
-    }
-    printf("End of fs_opendir\n");
+        fdd->directory = myDir;
+    	fdd->dirEntryPosition = 0;
+     	fdd->d_reclen = sizeof(fdDir);
 
+   	printf("End of fs_opendir\n");
+	//cleanup
 	if(myDir) free(myDir);
 	myDir=NULL;
     	if(ppi) free(ppi);
 	ppi=NULL;
-}
+	
+        return(fdd);
+	}
+//end of fs_opendir()
+
 
 struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
 {
@@ -234,6 +240,7 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
     
     return dirPath->di;
 	*/
+	return NULL;
 }
 
 int fs_closedir(fdDir *dirPath)
@@ -339,6 +346,7 @@ int fs_isFile(char *filename)
 }
 
 
+//return 0 if file, returns 1 if dir
 int fs_isDir(char *pathname)
 {
     parsePathInfo *ppi;
