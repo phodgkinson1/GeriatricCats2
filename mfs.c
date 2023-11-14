@@ -190,11 +190,11 @@ fdDir *fs_opendir(const char *pathname)
 
    	printf("End of fs_opendir\n");
 	//cleanup
-	if(myDir) free(myDir);
+	if(myDir!=NULL) free(myDir);
 	myDir=NULL;
-    	if(ppi) free(ppi);
+	if(ppi->parent != NULL) free(ppi->parent);
+    	if(ppi!=NULL) free(ppi);
 	ppi=NULL;
-	
         return(fdd);
 	}
 //end of fs_opendir()
