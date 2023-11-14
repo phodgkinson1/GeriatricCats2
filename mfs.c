@@ -86,20 +86,25 @@ int fs_mkdir(const char *pathname, mode_t mode)
 int fs_rmdir(const char *pathname)
 {
     // ParsePath
-    parsePathInfo ppi;
-    if (parsePath((char *)pathname, &ppi) != 0) return -1;
+    parsePathInfo *ppi = malloc(sizeof(parsePathInfo));
+    if (parsePath((char *)pathname, ppi) != 0) return -1;
 
     // find index
-    int index = FindEntryInDir(ppi.parent, ppi.lastElement);
+    int index = FindEntryInDir(ppi->parent, ppi->lastElement);
     if (index == -1) return -1;
 
     // load the directory to be removed
-    DE *dirRemove = loadDir(ppi.parent, index);
+    // DE *dirRemove = loadDir(ppi.parent, index);
 
     // check fs_isDir is 1 --> dir (must be return dir)
     if (fs_isDir((char *)pathname) != 1) return -1;
 
 	//iterate through every entry in dirRemove and make sure empty. if files with name not '\0' then cannot remove return -1.
+
+    ppi->parent = &ppi->parent[index];
+
+    DE *dirRemove = ppi->parent;
+
 
     // check loading directory is empty (must be empty)
     if (dirRemove != NULL) return -1;
@@ -118,6 +123,10 @@ int fs_rmdir(const char *pathname)
 	//ext = loadExtent()
 	//set ppi.parent[index] info in directory entry to "unused" 0/null/'\0' etc
 	//call releaseBlocks (ext[index]->start, size???)
+
+    free(ppi);
+    return 0;
+
 
 }
 
@@ -313,6 +322,8 @@ int fs_isFile(char *filename)
     int result = dirEntry->isDirectory == 0; // Returns 1 if file (isDirectory == 0), 0 otherwise
 
     printf("result: %d \n", result);
+    printf("File removed\n");
+
     free(ppi);
     return result;
 }
@@ -338,6 +349,8 @@ int fs_isDir(char *pathname)
     int result = dirEntry->isDirectory == 1; // Returns 1 if directory (isDirectory == 1), 0 otherwise
 
     printf("result: %d \n", result);
+    printf("Dir removed\n");
+
     free(ppi);
     return result;
 }
@@ -347,18 +360,21 @@ int fs_isDir(char *pathname)
 int fs_delete(char *filename)
 {
     // ParsePath
-    parsePathInfo ppi;
-    if (parsePath(filename, &ppi) != 0) return -1;
+    parsePathInfo *ppi = malloc(sizeof(parsePathInfo));
+    if (parsePath(filename, ppi) != 0) return -1;
 
     // find index
-    int index = FindEntryInDir(ppi.parent, ppi.lastElement);
+    int index = FindEntryInDir(ppi->parent, ppi->lastElement);
     if (index == -1) return -1;
 
     // load the directory to be removed
-    DE *dirRemove = loadDir(ppi.parent, index);
+    // DE *dirRemove = loadDir(ppi.parent, index);
 
     // check fs_isFile is 0 --> file (must be return file)
     if (fs_isFile(filename) != 0) return -1;
+
+    ppi->parent = &ppi->parent[index];
+    DE *dirRemove = ppi->parent;
 
     // Release the blokcs associated with dirRemove
     EXTTABLE *extTable = loadExtent(dirRemove);
@@ -371,12 +387,12 @@ int fs_delete(char *filename)
         }
     }
 
-    // Mark the directory as unused
-    memset(dirRemove, 0, sizeof(DE));
 
     // Write to the disk (need to modify)
     //  LBAwrite();
 
+    free(ppi);
+    return 0;
 
 }
 
