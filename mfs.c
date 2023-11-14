@@ -92,10 +92,11 @@ int fs_mkdir(const char *pathname, mode_t mode)
 	}
 
 
-
 // Remove empty directory
 int fs_rmdir(const char *pathname)
 {
+    printf("fs_rmdir starts: \n");
+
     // ParsePath
     parsePathInfo *ppi = malloc(sizeof(parsePathInfo));
     if (parsePath((char *)pathname, ppi) != 0) return -1;
@@ -104,42 +105,36 @@ int fs_rmdir(const char *pathname)
     int index = FindEntryInDir(ppi->parent, ppi->lastElement);
     if (index == -1) return -1;
 
-    // load the directory to be removed
-    // DE *dirRemove = loadDir(ppi.parent, index);
-
     // check fs_isDir is 1 --> dir (must be return dir)
     if (fs_isDir((char *)pathname) != 1) return -1;
 
-	//iterate through every entry in dirRemove and make sure empty. if files with name not '\0' then cannot remove return -1.
+    // load the directory that targets to be removed
+    DE *dirRemove = loadDir(ppi->parent, index);
 
-    ppi->parent = &ppi->parent[index];
-
-    DE *dirRemove = ppi->parent;
-
-
-    // check loading directory is empty (must be empty)
-    if (dirRemove != NULL) return -1;
+    // by iterating through the entries, check its empty condition
+    if (isDirEmpty(dirRemove) != 1) return -1;
 
     // Release the blokcs associated with dirRemove
     EXTTABLE *extTable = loadExtent(dirRemove);
 
     for (int i = 0; i < 5; i++)
     {
-	if (extTable->tableArray[i].count > 0)
-	{
-	    releaseBlocks(extTable->tableArray[i].start, extTable->tableArray[i].count);
-	}
+        if (extTable->tableArray[i].count > 0)
+        {
+            releaseBlocks(extTable->tableArray[i].start, extTable->tableArray[i].count);
+        }
     }
 
-	//ext = loadExtent()
-	//set ppi.parent[index] info in directory entry to "unused" 0/null/'\0' etc
-	//call releaseBlocks (ext[index]->start, size???)
+    free(extTable);
 
+    markDirUnused(dirRemove);
+    writeDir(ppi->parent, index);
+
+    free(dirRemove);
     free(ppi);
     return 0;
-
-
 }
+
 
 fdDir *fs_opendir(const char *pathname)
 	{

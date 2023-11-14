@@ -5,6 +5,12 @@
 #include "mfsHelper.h"
 #include "vcb.h"
 
+// Global variables
+DE * rootDir;
+DE * cwd;
+int cwdGlobal;
+
+
 // if -1 then directory or file does not exist
 //  ex) /home/studnet/Documents/foo
 //      foo (last element) --> Relative path --> parent = cwd
@@ -132,6 +138,38 @@ int isDirectory(DE *dir)
 
 	if (dir->isDirectory == 1) return 1;
 	else return 0;
+}
+
+// Conventionally, empty dir only contains . and ..
+int isDirEmpty(DE *dir) 
+{
+        int numEntries = dir[0].fileSize / sizeof(DE);
+
+        for (int i = 2; i < numEntries; i++) 
+        {
+                if (dir[i].fileName[0] != '\0') 
+                { 
+                        return 1;
+                }
+        }
+        return 0; // --> Empty dir
+}
+
+void markDirUnused(DE *dir)
+{
+        if (dir == NULL) return;
+
+        // set all components in DE struct as unused manually
+        dir->fileName[0] = '\0';
+        dir->extentBlockStart = 0;
+        dir->extentIndex = 0;
+        dir->fileSize = 0;
+        dir->createdTime = 0;
+        dir->modifiedTime = 0;
+        dir->lastAccessedTime = 0;
+        dir->isDirectory = 0; // 0 represents file, but do we need to make 2 as unused?
+        // 0 --> file, 1 --> dir, 2 --> empty?
+
 }
 
 

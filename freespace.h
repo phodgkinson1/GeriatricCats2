@@ -11,8 +11,8 @@
 #define BLOCK_SIZE 512
 #define TOTAL_NUM_BLOCKS 19531
 
-int bytesInBitmap;
-unsigned char * bitmapGlobal;
+extern int bytesInBitmap;
+extern unsigned char * bitmapGlobal;
 
 // struct extent
 typedef struct EXTENT

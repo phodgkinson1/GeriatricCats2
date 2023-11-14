@@ -21,6 +21,10 @@ int writeDir(DE * dir, int location);
 int parsePath(char * path, parsePathInfo * ppi);
 int FindEntryInDir(DE * dir, char * fileName);
 int isDirectory(DE * entry);
+int isDirEmpty(DE *dir);
+void markDirUnused(DE *dir);
+
+
 EXTTABLE * loadExtent(DE * dir);
 DE * loadDir(DE * dir, int index);
 

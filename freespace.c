@@ -3,6 +3,11 @@
 #include <stdio.h>
 #include <string.h>
 
+
+int bytesInBitmap;
+unsigned char * bitmapGlobal;
+
+
 // InitFreeSpace is called when you initialize the volume
 // returns the block number where the freespace map starts
 int initFreeSpace (int blockCount, int bytesPerBlock)
