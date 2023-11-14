@@ -82,6 +82,7 @@ int fs_mkdir(const char *pathname, mode_t mode)
  	writeDir(ppiTest->parent, parentDirStart);
 
     	// cleanup
+	if(ppiTest->parent != NULL) free(ppiTest->parent);
 	if(ppiTest!=NULL)
 		{
 		free(ppiTest);
