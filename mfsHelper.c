@@ -18,13 +18,19 @@ char *absolutePath;
 // Helper Functions: (1) FindEntryInDir(), (2) isDirectory(),
 int parsePath(char *path, parsePathInfo *ppi)
 {
+	
 	// check passing
 	printf("parsepath passing check: path: %s\n", path);
+<<<<<<< HEAD
 
+=======
+	printf("parsepath rootGlobal: %d\n", rootGlobal);
+>>>>>>> c83d7a8fe822ab03ff50427b9825c959616624e1
 	//	printf("Parsepath pass check: access ppi->lastElement[0]: |%c|\n", ppi-> lastElement[0]);
 	// load root dir, getting size first
 	if (rootDir == NULL)
 	{
+		printf("parsePath() inside if (rootDir == NULL)\n");
 		rootDir = loadDir(rootDir, rootGlobal);
 //printf("\n 1 parsepath root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
 //                rootDir[0].fileSize, rootDir[1].fileName, rootDir[1].fileSize, rootDir[2].fileName, rootDir[2].fileSize);
@@ -72,6 +78,8 @@ int parsePath(char *path, parsePathInfo *ppi)
 			ppi->indexOfLastElement = -1;
 			ppi->lastElement = NULL;
 			ppi->parent = NULL;
+
+			printf("parsepath set ppi to NULL\n");
 			return 0;
 		}
 		return -1;
@@ -91,6 +99,8 @@ int parsePath(char *path, parsePathInfo *ppi)
 			ppi->indexOfLastElement = index;
 			ppi->parent = parent;
 			ppi->lastElement = strdup(token1);
+
+			printf("Parsepath completed succesfuly\n");
 			return 0;
 		}
 

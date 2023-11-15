@@ -92,6 +92,7 @@ static int dispatchcount = sizeof (dispatchTable) / sizeof (dispatch_t);
 // Display files for use by ls command
 int displayFiles (fdDir * dirp, int flall, int fllong)
 	{
+		printf("\nInside displayFiles\n");
 #if (CMDLS_ON == 1)				
 	if (dirp == NULL)	//get out if error
 		return (-1);
