@@ -14,7 +14,7 @@ int fs_mkdir(const char *pathname, mode_t mode)
 {
     // update pathname
     printf("called fs_mkdr with pathname : |%s|\n", pathname);
-
+														// ******* add condition here to check if cdw==rootDir if no absolute
     // update pathname with new element
     char *newDir = malloc(256);
     strcpy(newDir, currentDir);
@@ -82,6 +82,12 @@ int fs_mkdir(const char *pathname, mode_t mode)
 
     printf("inside mk dir- parent[2] startextentblock: %d\n", ppiTest->parent[nextAvailable].extentBlockStart);
     writeDir(ppiTest->parent, parentDirStart);
+
+	printf("mk_dir parent[0]:|%s| filesize: %d _____ parent[1]: |%s| filesize: %d  parent[2]: |%s| filesize: %d\n", ppiTest->parent[0].fileName,
+        ppiTest->parent[0].fileSize, ppiTest->parent[1].fileName, ppiTest->parent[1].fileSize, ppiTest->parent[2].fileName, ppiTest->parent[2].fileSize);
+  	printf("mk_dir root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
+        rootDir[0].fileSize, rootDir[1].fileName, rootDir[1].fileSize, rootDir[2].fileName, rootDir[2].fileSize);
+
 
     	// cleanup
 	if(ppiTest!=NULL)
@@ -398,6 +404,16 @@ int fs_setcwd(char *pathname) {
 
 int fs_isFile(char *filename)
 {
+ 	char *newDir = malloc(256);
+        strcpy(newDir, currentDir);
+        printf("pathname 0 char : |%c|\n", filename[0] != '/');
+        if (currentDir[strlen(currentDir) - 1] != '/' && filename[0] != '/')
+                {
+                strcat(newDir, "/");
+                }
+        strcat(newDir, filename);
+        printf("newdir filename : |%s|\n", newDir);
+
     parsePathInfo *ppi;
     ppi = malloc(sizeof(parsePathInfo)); // Allocate and initialize ppi
 
@@ -425,15 +441,27 @@ int fs_isFile(char *filename)
 // return 0 if file, returns 1 if dir
 int fs_isDir(char *pathname)
 {
+
+	char *newDir = malloc(256);
+        strcpy(newDir, currentDir);
+        printf("pathname 0 char : |%c|\n", pathname[0] != '/');
+        if (currentDir[strlen(currentDir) - 1] != '/' && pathname[0] != '/')
+                {
+                strcat(newDir, "/");
+                }
+        strcat(newDir, pathname);
+        printf("newdir pathname : |%s|\n", newDir);
+
     parsePathInfo *ppi;
     ppi = malloc(sizeof(parsePathInfo)); // Allocate and initialize ppi
+
+        printf("isDir before parsepath call\n");
 
     if (parsePath(pathname, ppi) != 0)
     {
         // Parsing failed, assuming not a directory
         return 0;
     }
-
     int index = FindEntryInDir(ppi->parent, ppi->lastElement);
     if (index == -1)  
     {
