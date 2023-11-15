@@ -264,11 +264,11 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
     printf("\nInside fs_readdir\n");
     //int directoryEntries = dirPath->directory->fileSize / sizeof(DE);
     int directoryEntries = 0;
-    printf("fs_readdir directoryEntries value: %d", directoryEntries);
+    printf("fs_readdir directoryEntries value: %d\n", directoryEntries);
 
     // in the other section he used a for loop
     // how to know if a directory entry is being used? I used NULL
-    while (&dirPath->directory[dirPath->dirEntryPosition] == NULL)
+    while (dirPath->directory[dirPath->dirEntryPosition].fileName[0]== '\0')
     {
         dirPath->dirEntryPosition++;
         if (dirPath->dirEntryPosition >= directoryEntries)
@@ -279,6 +279,7 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
 
     // copy the name of currenct directory to fs_diriteminfo
     strcpy(dirPath->di->d_name, dirPath->directory[dirPath->dirEntryPosition].fileName);
+    printf("di->d_name: %s\n", dirPath->di->d_name);
 
     // check the type of the directory
     if (isDirectory(dirPath->directory) == 1)
@@ -294,8 +295,7 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
     dirPath->dirEntryPosition++;
 
     return dirPath->di;
-
-    return NULL;
+    
 }
 
 int fs_closedir(fdDir *dirPath)
