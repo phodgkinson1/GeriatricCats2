@@ -82,7 +82,6 @@ int fs_mkdir(const char *pathname, mode_t mode)
  	writeDir(ppiTest->parent, parentDirStart);
 
     	// cleanup
-	if(ppiTest->parent != NULL) free(ppiTest->parent);
 	if(ppiTest!=NULL)
 		{
 		free(ppiTest);
@@ -96,21 +95,51 @@ int fs_mkdir(const char *pathname, mode_t mode)
 // Remove empty directory
 int fs_rmdir(const char *pathname)
 {
+// -----------------------------------------------------------------------------
     printf("fs_rmdir starts: \n");
+        // update pathname
+        printf("called fs_mkdr with pathname : |%s|\n", pathname);
+
+        // update pathname with new element
+        char *newDir = malloc(256);
+        strcpy(newDir, currentDir);
+        printf("pathname 0 char : |%c|\n", pathname[0] != '/');
+        if (currentDir[strlen(currentDir) - 1] != '/' && pathname[0] != '/')
+                {
+                strcat(newDir, "/");
+                }
+        strcat(newDir, pathname);
+        printf("newdir pathname : |%s|\n", newDir);
+
+// -----------------------------------------------------------------------------
+
 
     // ParsePath
     parsePathInfo *ppi = malloc(sizeof(parsePathInfo));
-    if (parsePath((char *)pathname, ppi) != 0) return -1;
+
+    int parsePathResult = parsePath((char *)pathname, ppi);
+    printf("parsePathResult : %d \n", parsePathResult);
+
+    if (parsePathResult != 0) return -1; // ParsePath check done(o)
 
     // find index
     int index = FindEntryInDir(ppi->parent, ppi->lastElement);
-    if (index == -1) return -1;
+    printf("index : %d \n", index);
+
+    if (index == -1) return -1;  // find index check done(o)
 
     // check fs_isDir is 1 --> dir (must be return dir)
-    if (fs_isDir((char *)pathname) != 1) return -1;
+    int checkDir = fs_isDir((char *)pathname);
+    printf("fs_isDir result: %d \n", checkDir); 
+
+    if (checkDir != 1) return -1; // check fs_isDir check done(o)
 
     // load the directory that targets to be removed
-    DE *dirRemove = loadDir(ppi->parent, index);
+    DE *dirRemove = &ppi->parent[index];
+
+    printf("dirRemove filename: %s \n", dirRemove->fileName); // check dirRemove is targetted based on pathname
+
+// debug until here
 
     // by iterating through the entries, check its empty condition
     if (isDirEmpty(dirRemove) != 1) return -1;
@@ -120,9 +149,9 @@ int fs_rmdir(const char *pathname)
 
     for (int i = 0; i < 5; i++)
     {
-        if (extTable->tableArray[i].count > 0)
+        if (extTable[index].tableArray[i].start > 0)
         {
-            releaseBlocks(extTable->tableArray[i].start, extTable->tableArray[i].count);
+            releaseBlocks(extTable[index].tableArray[i].start, extTable[index].tableArray[i].count);
         }
     }
 
@@ -191,11 +220,9 @@ fdDir *fs_opendir(const char *pathname)
 
    	printf("End of fs_opendir\n");
 	//cleanup
-	if(myDir!=NULL) free(myDir);
-	myDir=NULL;
-	if(ppi->parent != NULL) free(ppi->parent);
-    	if(ppi!=NULL) free(ppi);
-	ppi=NULL;
+	if(myDir) free(myDir);
+	if(ppi) free(ppi);
+
         return(fdd);
 	}
 //end of fs_opendir()
@@ -334,8 +361,6 @@ int fs_isFile(char *filename)
     DE *dirEntry = &(ppi->parent[index]);
     int result = dirEntry->isDirectory == 0; // Returns 1 if file (isDirectory == 0), 0 otherwise
 
-    printf("result: %d \n", result);
-    printf("File removed\n");
 
     free(ppi);
     return result;
@@ -362,8 +387,6 @@ int fs_isDir(char *pathname)
     DE *dirEntry = &(ppi->parent[index]);
     int result = dirEntry->isDirectory == 1; // Returns 1 if directory (isDirectory == 1), 0 otherwise
 
-    printf("result: %d \n", result);
- //   printf("Dir removed\n");
 
     free(ppi);
     return result;
