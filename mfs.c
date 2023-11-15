@@ -92,7 +92,7 @@ int fs_mkdir(const char *pathname, mode_t mode)
 	}
 
 
-// Remove empty directory
+// Remove empty directory ***** (DONE)
 int fs_rmdir(const char *pathname)
 {
 // -----------------------------------------------------------------------------
@@ -292,62 +292,83 @@ int fs_closedir(fdDir *dirPath)
 
 char *fs_getcwd(char *pathname, size_t size) {
 
-/*    printf("fs_getcwd function called\n");
-    if (size <= 0 || pathname == NULL) {
-        return NULL;
-    }
-
-    // Copy the current directory path into the provided buffer
-    strncpy(pathname, currentDir, size);
-
-    // Ensure the buffer is null-terminated
-    pathname[size - 1] = '\0';
-*/
+    
     return pathname;
 }
 
 
 int fs_setcwd(char *pathname) {
-    printf("fs_setcwd function called\n");
-    if (pathname == NULL || strlen(pathname) == 0) {
-        return -1; // Invalid path
+
+    printf("fs_setcwd starts: \n");
+
+    // ParsePath
+    parsePathInfo *ppi = malloc(sizeof(parsePathInfo));
+
+    int parsePathResult = parsePath(pathname, ppi);
+    printf("parsePathResult : %d \n", parsePathResult);
+
+    if (parsePathResult != 0) return -1; // ParsePath check done(o)
+
+    // find index
+    int index = FindEntryInDir(ppi->parent, ppi->lastElement);
+    printf("index : %d \n", index);
+
+    if (index == -1) return -1;  // find index check done(o)
+
+    // Check if the target is a directory
+    if (!isDirectory(&ppi->parent[ppi->indexOfLastElement])) {
+        return -1; // Target is not a directory
     }
 
-    // Tokenize the path
-    char *token = strtok(pathname, "/");
-    char tokens[256][256]; // 256 tokens with 256 characters each
-    int numTokens = 0;
+    // Free the previous cwd if it is not the root directory
+    if (cwd != rootDir) free(cwd);
 
-    while (token != NULL && numTokens < 256) {
-        // Handle each token for '.' and '..'
-        if (strcmp(token, ".") == 0) {
-            // Current directory remains unchanged
-        } else if (strcmp(token, "..") == 0) {
-            // Remove the last component from currentDir (go up one directory)
-            char *lastSlash = strrchr(currentDir, '/');
-            if (lastSlash != NULL) {
-                *lastSlash = '\0';
-            }
-        } else {
-            // Normal case: add the token to the array
-            strcpy(tokens[numTokens], token);
-            numTokens++;
+    cwd = loadDir(ppi->parent, index);
+
+    char *pathComponents[32];
+    int componentCount = 0;
+    cwdGlobal = index;
+    printf("cwdGlobal before iterating through: %d \n", cwdGlobal);
+// -----------------------------------------------------------------
+
+    // Absolute path, which always start from /
+    if (pathname[0] == '/') 
+    {
+	absolutePath = pathname;
+    }
+    // Relative path  is affected by current working directory
+    else
+    {
+        // first tokenize and get them as an array
+	char *token = strtok(pathname, "/");
+        while (token != NULL && componentCount < 32)
+        {
+	    pathComponents[componentCount++] = strdup(token);
+	    token = strtok(NULL, "/");
+
+	    printf("Tokenized pathname : %s \n", pathComponents[componentCount++]);
         }
 
-        // Get the next token
-        token = strtok(NULL, "/");
+	for (int i = 0; i < componentCount; i++)
+        {
+	    if (pathComponents[i] == ".")
+	    {
+		continue;
+	    }
+	    else if (pathComponents[i] == "..")
+	    {
+		cwdGlobal--;
+		cwd = loadDir(rootDir, cwdGlobal);
+
+	    }
+	    else
+	    {
+		// THis should deal with regular like Dcouments/cat/dang/shit
+            }
+	}
     }
 
-    // Reconstruct the new path based on the tokens
-    char newPath[256] = "";
-    for (int i = 0; i < numTokens; i++) {
-        strcat(newPath, "/");
-        strcat(newPath, tokens[i]);
-    }
 
-    // Update the current directory path
-    strncpy(currentDir, newPath, sizeof(currentDir));
-    currentDir[sizeof(currentDir) - 1] = '\0';
 
     return 0; // Success
 }
@@ -367,7 +388,8 @@ int fs_isFile(char *filename)
     }
 
     int index = FindEntryInDir(ppi->parent, ppi->lastElement);
-    if (index == -1) {
+    if (index == -1) 
+    {
         // Entry not found, assuming not a file
         return 0;
     }
@@ -393,7 +415,8 @@ int fs_isDir(char *pathname)
     }
 
     int index = FindEntryInDir(ppi->parent, ppi->lastElement);
-    if (index == -1) {
+    if (index == -1)  
+    {
         // Entry not found, assuming not a directory
         return 0;
     }
@@ -494,4 +517,5 @@ int fs_stat(const char *path, struct fs_stat *buf) {
 
     return 0; // Success
 }
+
 

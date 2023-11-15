@@ -9,7 +9,7 @@
 DE * rootDir;
 DE * cwd;
 int cwdGlobal;
-
+char *absolutePath;
 
 // if -1 then directory or file does not exist
 //  ex) /home/studnet/Documents/foo
