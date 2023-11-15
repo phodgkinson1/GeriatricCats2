@@ -19,12 +19,16 @@ char *absolutePath;
 int parsePath(char *path, parsePathInfo *ppi)
 {
 	// check passing
-	//	printf("parsepath passing check: path: %s\n", path);
+	printf("parsepath passing check: path: %s\n", path);
+
 	//	printf("Parsepath pass check: access ppi->lastElement[0]: |%c|\n", ppi-> lastElement[0]);
 	// load root dir, getting size first
 	if (rootDir == NULL)
 	{
 		rootDir = loadDir(rootDir, rootGlobal);
+//printf("\n 1 parsepath root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
+//                rootDir[0].fileSize, rootDir[1].fileName, rootDir[1].fileSize, rootDir[2].fileName, rootDir[2].fileSize);
+
 	}
 
 	if (cwd == NULL)
@@ -41,8 +45,11 @@ int parsePath(char *path, parsePathInfo *ppi)
 	DE *startDir;
 	DE *parent;
 
+//	printf("\n 2 parsepath root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
+//                rootDir[0].fileSize, rootDir[1].fileName, rootDir[1].fileSize, rootDir[2].fileName, rootDir[2].fileSize);
 	if (path[0] == '/')
 	{
+		printf("parsePath loads root as startDir\n");
 		startDir = rootDir;
 	}
 	else
@@ -53,8 +60,6 @@ int parsePath(char *path, parsePathInfo *ppi)
 	parent = startDir;
 
 	DE * temp;
-		printf("parent[0]:|%s| filesize: %d _____ parent[1]: |%s| filesize: %d \n", parent[0].fileName,
-		parent[0].fileSize, parent[1].fileName, parent[1].fileSize);
 
 	// Initialize pointers of saveptr && token1
 	char *saveptr;
@@ -63,7 +68,7 @@ int parsePath(char *path, parsePathInfo *ppi)
 	if (token1 == NULL)
 	{
 		if (strcmp(path, "/") == 0)
-		{	startDir=NULL;
+		{
 			ppi->indexOfLastElement = -1;
 			ppi->lastElement = NULL;
 			ppi->parent = NULL;
@@ -71,16 +76,18 @@ int parsePath(char *path, parsePathInfo *ppi)
 		}
 		return -1;
 	}
-
 	while (token1 != NULL)
 	{
+// 		printf("3 parsepath root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
+//                rootDir[0].fileSize, rootDir[1].fileName, rootDir[1].fileSize, rootDir[2].fileName, rootDir[2].fileSize);
 		char *token2 = strtok_r(NULL, "/", &saveptr);
 		// look for directory of token 2 name in current parent and return index of directory entry
 		int index = FindEntryInDir(parent, token1); // 1 Helper function
-													// if reached last directory in our path before creating a new one
+	
+//		printf("4 parsepath root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
+//                rootDir[0].fileSize, rootDir[1].fileName, rootDir[1].fileSize, rootDir[2].fileName, rootDir[2].fileSize);												// if reached last directory in our path before creating a new one
 		if (token2 == NULL)							// at end
 		{
-			
 			ppi->indexOfLastElement = index;
 			ppi->parent = parent;
 			ppi->lastElement = strdup(token1);
@@ -90,23 +97,32 @@ int parsePath(char *path, parsePathInfo *ppi)
 		// index ==-1 if dir of current token is not found in current parent (which is our current loaded directory iterating) then -2 invalid path
 		if (index == -1)
 			return -2;
-
+// printf("5 parsepath root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
+//                rootDir[0].fileSize, rootDir[1].fileName, rootDir[1].fileSize, rootDir[2].fileName, rootDir[2].fileSize);
 		// if index != -1 then item already exists in our directory, but !isDirectory means the item is a FILE and not dir, so -2 invalid path
 		if (!isDirectory(&parent[index]))
 			return -2; // 2 Helper function
 
 		// load memory for new directory using index in current parent
 		temp = loadDir(parent, index);
+//                printf("5.5 parsepath root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
+//                rootDir[0].fileSize, rootDir[1].fileName, rootDir[1].fileSize, rootDir[2].fileName, rootDir[2].fileSize);
 
 		// release current parent if not equal to the root directory or current working directory
 		// note- we are only in root directory or current directory in first while loop or last while loop.
 		if (parent != startDir)
 		{
 			free(parent);
+//		printf("6 parsepath root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
+//                rootDir[0].fileSize, rootDir[1].fileName, rootDir[1].fileSize, rootDir[2].fileName, rootDir[2].fileSize);
+
 		}
 		// set parent to search to our newly loaded directory, and set next directory name to search in parent
 		parent = temp;
 		token1 = token2;
+//                printf("7 parsepath root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
+//                rootDir[0].fileSize, rootDir[1].fileName, rootDir[1].fileSize, rootDir[2].fileName, rootDir[2].fileSize);
+
 	}
 }
 
@@ -174,10 +190,10 @@ void markDirUnused(DE *dir)
 // load an extent table for a directory to retreive locations of directory entry items
 EXTTABLE *loadExtent(DE *dir)
 {
-	printf("loadExtent called \n");
+//	printf("loadExtent called \n");
 	int extStart = dir[1].extentBlockStart;
 	int numEntries = dir[1].fileSize / sizeof(DE);
-	printf("extent for dir starts at block %d\n", extStart);
+//	printf("extent for dir starts at block %d\n", extStart);
 	int bytesNeeded = numEntries * sizeof(EXTTABLE);
 	int blocksNeeded = ((bytesNeeded + BLOCK_SIZE - 1) / BLOCK_SIZE);
 	bytesNeeded = blocksNeeded * BLOCK_SIZE;
@@ -193,16 +209,16 @@ EXTTABLE *loadExtent(DE *dir)
 
 int writeExtent(DE * dir, EXTTABLE * ext)
 {
-	printf("writeExtent called \n");
-	printf("inside writeExtent- extent[2].tableArray[0].start: %d\n",
-	ext[2].tableArray[0].start);
+//	printf("writeExtent called \n");
+//	printf("inside writeExtent- extent[2].tableArray[0].start: %d\n",
+//	ext[2].tableArray[0].start);
 	int extStart = dir[1].extentBlockStart;
         int numEntries = dir[1].fileSize / sizeof(DE);
-        printf("extent for dir starts at block %d\n", extStart);
+//        printf("extent for dir starts at block %d\n", extStart);
         int bytesNeeded = numEntries * sizeof(EXTTABLE);
         int blocksNeeded = ((bytesNeeded + BLOCK_SIZE - 1) / BLOCK_SIZE);
         bytesNeeded = blocksNeeded * BLOCK_SIZE;
-	printf("extent Blocks needed to write : %d blocks\n", blocksNeeded);
+//	printf("extent Blocks needed to write : %d blocks\n", blocksNeeded);
 	if (LBAwrite(ext, blocksNeeded, extStart) != blocksNeeded)
         	{
                 printf("writeExtent() LBAwrite() error!\n");
@@ -215,12 +231,12 @@ int writeExtent(DE * dir, EXTTABLE * ext)
 
 int writeDir(DE * dir, int location)
 {
-	printf("write dir called\n");
+//	printf("write dir called\n");
 	int numEntries = dir[1].fileSize / sizeof(DE);
-	printf("writeDir with numEntries: %d\n", numEntries);
+//	printf("writeDir with numEntries: %d\n", numEntries);
         int bytesNeeded = numEntries * sizeof(DE);
         int blocksNeeded = ((bytesNeeded + BLOCK_SIZE - 1) / BLOCK_SIZE);
-        printf("dir[index].fileSize: %d | blocksNeeded: %d\n", dir[1].fileSize, blocksNeeded);
+//        printf("dir[index].fileSize: %d | blocksNeeded: %d\n", dir[1].fileSize, blocksNeeded);
 	if (LBAwrite(dir, blocksNeeded, location) != blocksNeeded)
         	{
                 printf("writeDir LBAwrite() error!\n");
@@ -231,7 +247,10 @@ int writeDir(DE * dir, int location)
 
 // Loads a directory from disk into memory
 DE *loadDir(DE *dir, int index)
-{
+	{
+//	printf("1 loadDir root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
+//        rootDir[0].fileSize, rootDir[1].fileName, rootDir[1].fileSize, rootDir[2].fileName, rootDir[2].fileSize);
+
 	printf("loadDir called, with index: %d\n", index);
 	int startBlock;
 	DE * newDir;
@@ -239,6 +258,9 @@ DE *loadDir(DE *dir, int index)
 	// if loading root
 	if (dir == NULL)
 	{
+//	printf("2 loadDir root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
+//        rootDir[0].fileSize, rootDir[1].fileName, rootDir[1].fileSize, rootDir[2].fileName, rootDir[2].fileSize);
+
 		startBlock = index;
      		newDir = malloc(BLOCK_SIZE);
         	if (LBAread(newDir, 1, startBlock) != 1)
@@ -248,7 +270,7 @@ DE *loadDir(DE *dir, int index)
         		}
         	int rootDirSize = newDir[0].fileSize;
         	int sizeInBlocks = ((rootDirSize + BLOCK_SIZE - 1) / BLOCK_SIZE);
-        	printf("fileSize: %d | sizeinblocks: %d\n", rootDirSize, sizeInBlocks);
+//        	printf("fileSize: %d | sizeinblocks: %d\n", rootDirSize, sizeInBlocks);
         	if (sizeInBlocks > 1)
         		{
                 	free(newDir);
@@ -264,26 +286,36 @@ DE *loadDir(DE *dir, int index)
 
 	else
 	{
+//		printf("3 loadDir root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
+//        	rootDir[0].fileSize, rootDir[1].fileName, rootDir[1].fileSize, rootDir[2].fileName, rootDir[2].fileSize);
+
 		EXTTABLE *ext = loadExtent(dir);
-		printf("filename at index %d in parent %s\n", index, dir[index].fileName);
+//		printf("filename at index %d in parent %s\n", index, dir[index].fileName);
 		startBlock = ext[index].tableArray[0].start;
-		printf("extent table returned start of loading dir at: %d\n", startBlock);
-		printf("ext[2].tableArray[0].start: %d\n", ext[2].tableArray[0].start);
+//		printf("extent table returned start of loading dir at: %d\n", startBlock);
+//		printf("ext[2].tableArray[0].start: %d\n", ext[2].tableArray[0].start);
 		if(ext != NULL) free(ext);
 
         	int numEntries = dir[1].fileSize / sizeof(DE);
         	int bytesNeeded = numEntries * sizeof(DE);
         	int blocksNeeded = ((bytesNeeded + BLOCK_SIZE - 1) / BLOCK_SIZE);
         	bytesNeeded = blocksNeeded * BLOCK_SIZE;
-                printf("dir[index].fileSize: %d | sizeInBlocks: %d\n", dir[index].fileSize, blocksNeeded);
+//                printf("dir[index].fileSize: %d | sizeInBlocks: %d\n", dir[index].fileSize, blocksNeeded);
                 newDir = malloc(bytesNeeded);
                 if (LBAread(newDir, blocksNeeded, startBlock) != blocksNeeded)
                 	{
                         printf("dir loading full subdir LBAread() error!\n"); 
                         exit(1);
                         }
-		printf("inside loadDir, extentBlockStart at newDir: %d\n", newDir[1].extentBlockStart);
+//		printf("inside loadDir, extentBlockStart at newDir: %d\n", newDir[1].extentBlockStart);
 	}
-	if(dir != NULL) free(dir);
+
+//	printf("4 loadDir root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
+//        rootDir[0].fileSize, rootDir[1].fileName, rootDir[1].fileSize, rootDir[2].fileName, rootDir[2].fileSize);
+
+	dir=NULL;
+//	printf("5 loadDir root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
+//        rootDir[0].fileSize, rootDir[1].fileName, rootDir[1].fileSize, rootDir[2].fileName, rootDir[2].fileSize);
+
 	return newDir;
 }

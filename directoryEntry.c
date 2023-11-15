@@ -14,8 +14,9 @@ int rootGlobal;
 int initDir(int defaultEntries, struct DE * parent, int parentIndex)
 {
 	printf("inside initDir, passed parentIndex: %d\n", parentIndex);
+
         struct DE *p = parent;  // Declare p here to make it accessible in the if-else blocks
-//        printf("p filename: %s\n", p->fileName);
+        printf("p filename: %s\n", p->fileName);
 
 //	printf("size Directory entry: %ld\n", sizeof(struct DE));
 	//fill parent given (".") with location returned from allocateBlocks- should be block 7
@@ -67,6 +68,7 @@ int initDir(int defaultEntries, struct DE * parent, int parentIndex)
 
         	// If there's no parent (root directory), set p to the root directory entry
         	p = &dir[0];
+
         	// Initialize "." entry
         	strcpy(p->fileName, ".");
         	p->fileSize = bytesNeeded;
@@ -78,8 +80,8 @@ int initDir(int defaultEntries, struct DE * parent, int parentIndex)
         	p->lastAccessedTime = t;
         	p->isDirectory = 1;
 
-//	        printf("dir[0].extentStart: %d\n", dir[0].extentBlockStart);
-//		printf("dir[0].fileName: %s\n", dir[0].fileName);
+	        printf("dir[0].extentStart: %d\n", dir[0].extentBlockStart);
+		printf("dir[0].fileName: %s\n", dir[0].fileName);
 
         	// Initialize ".." entry for root
         	strcpy(dir[1].fileName, "..");
@@ -91,11 +93,14 @@ int initDir(int defaultEntries, struct DE * parent, int parentIndex)
         	dir[1].lastAccessedTime = p->lastAccessedTime;
         	dir[1].isDirectory = p->isDirectory;
 
-//                printf("dir[1].extentStart: %d\n", dir[1].extentBlockStart);
-//		printf("dir[1].fileName: %s\n", dir[1].fileName);
+                printf("dir[1].extentStart: %d\n", dir[1].extentBlockStart);
+		printf("dir[1].fileName: %s\n", dir[1].fileName);
 
 		rootGlobal = dirStart;
 		cwdGlobal= rootGlobal;
+      		//assign global
+        	rootDir=dir;
+
    		}
     	else
 	    	{
@@ -105,7 +110,7 @@ int initDir(int defaultEntries, struct DE * parent, int parentIndex)
 //  		printf("locaiton rootGlobal: block: %d\n", rootGlobal);
                 struct DE * rootDirCp = malloc(BLOCK_SIZE);
                 int returnCheck= LBAread(rootDirCp, 1, rootGlobal);
-//                printf("else root copy returnCheck: %d, rootDir[0].fileName: %s\n", returnCheck, rootDirCp[0].fileName);
+                printf("else root copy returnCheck: %d, rootDir[0].fileName: %s\n", returnCheck, rootDirCp[0].fileName);
                 struct DE * r = &rootDirCp[0];
 
 
@@ -120,10 +125,10 @@ int initDir(int defaultEntries, struct DE * parent, int parentIndex)
 		if(rootDirCp) free(rootDirCp);
 		rootDirCp=NULL;
 		r = NULL;
-//              printf("dir[0].extentStart: %d\n", dir[0].extentBlockStart);
+              printf("dir[0].extentStart: %d\n", dir[0].extentBlockStart);
 
 
-//              printf("check subdir[0].fileName: %s\n", dir[0].fileName);
+              printf("check subdir[0].fileName: %s\n", dir[0].fileName);
                 // Initialize ".." entry for root AS PARENT PASSED
                 strcpy(dir[1].fileName, "..");
                 dir[1].fileSize = bytesNeeded;
@@ -147,14 +152,14 @@ int initDir(int defaultEntries, struct DE * parent, int parentIndex)
                 printf("initDir- parent[parentIndex=2].extentBlockStart: %d\n", p[parentIndex].extentBlockStart);
 		}
 
+
         // Now write it to disk
   	if(LBAwrite(dir, blocksNeeded, dirStart) != blocksNeeded)
 		{
             	printf("LBA Write error!\n");
 		exit(1);
 		}
-
-	if(dir) free(dir);
+        if(dir != NULL && rootDir != dir) free(dir);
 	dir = NULL;
 	if (tempArray) free(tempArray);
 	//return start of directory location
