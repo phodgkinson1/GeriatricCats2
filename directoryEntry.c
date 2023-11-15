@@ -5,6 +5,8 @@
 #include "freespace.h"
 #include "mfsHelper.h"
 
+int rootGlobal;
+
 // Initialize Directory
 // **** THIS SHOULD BE CHEKCED.
 // Does not work unless extent *allocateBlock() function is implemented and extent table works

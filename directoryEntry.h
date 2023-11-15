@@ -10,7 +10,7 @@
 #define DIR_NAME_LEN 32
 #define DEFAULT_ENTRIES 50
 
-int rootGlobal;
+extern int rootGlobal;
 
 typedef struct DE
 {
