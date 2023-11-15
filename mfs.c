@@ -171,7 +171,6 @@ fdDir *fs_opendir(const char *pathname)
     int parsePathCheck = parsePath(newDir, ppi);
     printf("Inside fs_opendir return value of parsePath(): %d\n", parsePathCheck);
     printf("Inside fs_opendir ppi indexOfLast Element: %d\n", ppi->indexOfLastElement);
-    printf("Inside of fs_opendir ppi parent isDirectory value: %d\n", ppi->parent[ppi->indexOfLastElement].isDirectory);
 
     // check if directory with pathname exists
     if (parsePathCheck != 0)
@@ -181,14 +180,14 @@ fdDir *fs_opendir(const char *pathname)
     }
 
     // check if pathname is a directory
-   
+
     if (ppi->indexOfLastElement < 0)
     {
         printf("%s is not a directory\n", ppi->lastElement);
         return NULL;
     }
 
-     printf("Inside of fs_opendir isDirectory() value returned: %d\n", isDirectory(&ppi->parent[ppi->indexOfLastElement]));
+    printf("Inside of fs_opendir isDirectory() value returned: %d\n", isDirectory(&ppi->parent[ppi->indexOfLastElement]));
     printf("Inside of fs_opendir ppi parent isDirectory value: %d\n", ppi->parent[ppi->indexOfLastElement].isDirectory);
 
     if (isDirectory(&ppi->parent[ppi->indexOfLastElement]) <= 0)
@@ -202,19 +201,25 @@ fdDir *fs_opendir(const char *pathname)
     fdDir *fdd = malloc(sizeof(fdDir));
 
     fdd->directory = myDir;
+    printf("openDir fdd->firectory.isDirectory: %d\n", fdd->directory->isDirectory);
     fdd->dirEntryPosition = 0;
     fdd->d_reclen = sizeof(fdDir);
 
-    printf("End of fs_opendir\n");
     // cleanup
+    
     if (myDir != NULL)
         free(myDir);
     myDir = NULL;
-    if (ppi->parent != NULL)
-        free(ppi->parent);
+    /*if (ppi->parent != NULL)
+        free(ppi->parent);*/
     if (ppi != NULL)
         free(ppi);
     ppi = NULL;
+    
+
+  printf("End of fs_opendir\n");
+
+
     return (fdd);
 }
 // end of fs_opendir()
@@ -225,35 +230,40 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
     // Update the dirEntryPosition in dirPath to keep track of the position
     // Return NULL if there are no more entries
 
-    printf("Inside fs_readdir\n");
-    /*
-        int directoryEntries = dirPath->directory[0].fileSize / sizeof(DE);
+    printf("\nInside fs_readdir\n");
+    //int directoryEntries = dirPath->directory->fileSize / sizeof(DE);
+    int directoryEntries = 0;
+    printf("fs_readdir directoryEntries value: %d", directoryEntries);
 
-        //in the other section he used a for loop
-        //how to know if a directory entry is being used? I used NULL
-        while(&dirPath->directory[dirPath->dirEntryPosition] == NULL){
-            dirPath->dirEntryPosition++;
-            if(dirPath->dirEntryPosition >= directoryEntries){
-                return NULL;
-            }
-        }
-
-        //copy the name of currenct directory to fs_diriteminfo
-        strcpy(dirPath->di->d_name, dirPath->directory[dirPath->dirEntryPosition].fileName);
-
-        //check the type of the directory
-        if(isDirectory(dirPath->directory) == 1){
-            dirPath->di->fileType = 'd';
-        }
-        else{
-            dirPath->di->fileType = 'f';
-        }
-
-        //update positon for next iteration
+    // in the other section he used a for loop
+    // how to know if a directory entry is being used? I used NULL
+    while (&dirPath->directory[dirPath->dirEntryPosition] == NULL)
+    {
         dirPath->dirEntryPosition++;
+        if (dirPath->dirEntryPosition >= directoryEntries)
+        {
+            return NULL;
+        }
+    }
 
-        return dirPath->di;
-        */
+    // copy the name of currenct directory to fs_diriteminfo
+    strcpy(dirPath->di->d_name, dirPath->directory[dirPath->dirEntryPosition].fileName);
+
+    // check the type of the directory
+    if (isDirectory(dirPath->directory) == 1)
+    {
+        dirPath->di->fileType = 'd';
+    }
+    else
+    {
+        dirPath->di->fileType = 'f';
+    }
+
+    // update positon for next iteration
+    dirPath->dirEntryPosition++;
+
+    return dirPath->di;
+
     return NULL;
 }
 
