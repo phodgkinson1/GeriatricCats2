@@ -7,6 +7,7 @@
 extern DE * rootDir;
 extern DE * cwd;
 extern int cwdGlobal;
+extern char *absolutePath;
 
 typedef struct parsePathInfo
 {

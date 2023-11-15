@@ -9,7 +9,7 @@
 DE * rootDir;
 DE * cwd;
 int cwdGlobal;
-
+char *absolutePath;
 
 // if -1 then directory or file does not exist
 //  ex) /home/studnet/Documents/foo
@@ -168,8 +168,6 @@ void markDirUnused(DE *dir)
 
         // set all components in DE struct as unused manually
         dir->fileName[0] = '\0';
-        dir->extentBlockStart = 0;
-        dir->extentIndex = 0;
         dir->fileSize = 0;
         dir->createdTime = 0;
         dir->modifiedTime = 0;

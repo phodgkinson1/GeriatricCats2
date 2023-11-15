@@ -83,61 +83,101 @@ int fs_mkdir(const char *pathname, mode_t mode)
     printf("inside mk dir- parent[2] startextentblock: %d\n", ppiTest->parent[nextAvailable].extentBlockStart);
     writeDir(ppiTest->parent, parentDirStart);
 
-    // cleanup
-    if (ppiTest->parent != NULL)
-        free(ppiTest->parent);
-    if (ppiTest != NULL)
-    {
-        free(ppiTest);
-        ppiTest = NULL;
-    }
+    	// cleanup
+	if(ppiTest!=NULL)
+		{
+		free(ppiTest);
+		ppiTest=NULL;
+    		}
 
     return 1;
 }
 
-// Remove empty directory
+
+// Remove empty directory ***** (DONE)
 int fs_rmdir(const char *pathname)
 {
+// -----------------------------------------------------------------------------
+// This will be created as a helper function somewhere
     printf("fs_rmdir starts: \n");
+        // update pathname
+        printf("called fs_mkdr with pathname : |%s|\n", pathname);
+
+        // update pathname with new element
+        char *newDir = malloc(256);
+        strcpy(newDir, currentDir);
+        printf("pathname 0 char : |%c|\n", pathname[0] != '/');
+        if (currentDir[strlen(currentDir) - 1] != '/' && pathname[0] != '/')
+                {
+                strcat(newDir, "/");
+                }
+        strcat(newDir, pathname);
+        printf("newdir pathname : |%s|\n", newDir);
+
+// -----------------------------------------------------------------------------
+
 
     // ParsePath
     parsePathInfo *ppi = malloc(sizeof(parsePathInfo));
-    if (parsePath((char *)pathname, ppi) != 0)
-        return -1;
+
+    int parsePathResult = parsePath((char *)pathname, ppi);
+    printf("parsePathResult : %d \n", parsePathResult);
+
+    if (parsePathResult != 0) return -1; // ParsePath check done(o)
 
     // find index
     int index = FindEntryInDir(ppi->parent, ppi->lastElement);
-    if (index == -1)
-        return -1;
+    printf("index : %d \n", index);
+
+    if (index == -1) return -1;  // find index check done(o)
 
     // check fs_isDir is 1 --> dir (must be return dir)
-    if (fs_isDir((char *)pathname) != 1)
-        return -1;
+    int checkDir = fs_isDir((char *)pathname);
+    printf("fs_isDir result: %d \n", checkDir); 
+
+    if (checkDir != 1) return -1; // check fs_isDir check done(o)
 
     // load the directory that targets to be removed
-    DE *dirRemove = loadDir(ppi->parent, index);
+    DE *dirRemove = &ppi->parent[index];
+
+    printf("Original dirRemove: \n");
+    printf("fileName: %s \n", dirRemove->fileName);
+    printf("fileSize: %d \n", dirRemove->fileSize);
+    printf("isDirectory: %d \n", dirRemove->isDirectory);
 
     // by iterating through the entries, check its empty condition
-    if (isDirEmpty(dirRemove) != 1)
+    // checkDirEmpty == 0 -----> target dir is empty ----> ready to remove
+    int checkDirEmpty = isDirEmpty(dirRemove);
+
+    if (checkDirEmpty != 0) 
+    {
+        free(dirRemove);
         return -1;
+    }
+    printf("check Dir Empty: %d \n", checkDirEmpty);
+    printf("0 means ready to remove the dir!!\n");
+
 
     // Release the blokcs associated with dirRemove
     EXTTABLE *extTable = loadExtent(dirRemove);
 
     for (int i = 0; i < 5; i++)
     {
-        if (extTable->tableArray[i].count > 0)
+        if (extTable[index].tableArray[i].start > 0)
         {
-            releaseBlocks(extTable->tableArray[i].start, extTable->tableArray[i].count);
+            releaseBlocks(extTable[index].tableArray[i].start, extTable[index].tableArray[i].count);
         }
     }
 
-    free(extTable);
-
     markDirUnused(dirRemove);
+
     writeDir(ppi->parent, index);
 
-    free(dirRemove);
+    printf("Updated dirRemove: \n");
+    printf("fileName: %s \n", dirRemove->fileName);
+    printf("fileSize: %d \n", dirRemove->fileSize);
+    printf("isDirectory: %d \n", dirRemove->isDirectory);
+
     free(ppi);
     return 0;
 }
@@ -205,24 +245,15 @@ fdDir *fs_opendir(const char *pathname)
     fdd->dirEntryPosition = 0;
     fdd->d_reclen = sizeof(fdDir);
 
-    // cleanup
-    
-    if (myDir != NULL)
-        free(myDir);
-    myDir = NULL;
-    /*if (ppi->parent != NULL)
-        free(ppi->parent);*/
-    if (ppi != NULL)
-        free(ppi);
-    ppi = NULL;
-    
+   	printf("End of fs_opendir\n");
+	//cleanup
+	if(myDir) free(myDir);
+	if(ppi) free(ppi);
 
-  printf("End of fs_opendir\n");
+        return(fdd);
+	}
+//end of fs_opendir()
 
-
-    return (fdd);
-}
-// end of fs_opendir()
 
 struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
 {
@@ -280,71 +311,83 @@ int fs_closedir(fdDir *dirPath)
 char *fs_getcwd(char *pathname, size_t size)
 {
 
-    /*    printf("fs_getcwd function called\n");
-        if (size <= 0 || pathname == NULL) {
-            return NULL;
-        }
-
-        // Copy the current directory path into the provided buffer
-        strncpy(pathname, currentDir, size);
-
-        // Ensure the buffer is null-terminated
-        pathname[size - 1] = '\0';
-    */
+    
     return pathname;
 }
 
-int fs_setcwd(char *pathname)
-{
-    printf("fs_setcwd function called\n");
-    if (pathname == NULL || strlen(pathname) == 0)
-    {
-        return -1; // Invalid path
+
+int fs_setcwd(char *pathname) {
+
+    printf("fs_setcwd starts: \n");
+
+    // ParsePath
+    parsePathInfo *ppi = malloc(sizeof(parsePathInfo));
+
+    int parsePathResult = parsePath(pathname, ppi);
+    printf("parsePathResult : %d \n", parsePathResult);
+
+    if (parsePathResult != 0) return -1; // ParsePath check done(o)
+
+    // find index
+    int index = FindEntryInDir(ppi->parent, ppi->lastElement);
+    printf("index : %d \n", index);
+
+    if (index == -1) return -1;  // find index check done(o)
+
+    // Check if the target is a directory
+    if (!isDirectory(&ppi->parent[ppi->indexOfLastElement])) {
+        return -1; // Target is not a directory
     }
 
-    // Tokenize the path
-    char *token = strtok(pathname, "/");
-    char tokens[256][256]; // 256 tokens with 256 characters each
-    int numTokens = 0;
+    // Free the previous cwd if it is not the root directory
+    if (cwd != rootDir) free(cwd);
 
-    while (token != NULL && numTokens < 256)
+    cwd = loadDir(ppi->parent, index);
+
+    char *pathComponents[32];
+    int componentCount = 0;
+    cwdGlobal = index;
+    printf("cwdGlobal before iterating through: %d \n", cwdGlobal);
+// -----------------------------------------------------------------
+
+    // Absolute path, which always start from /
+    if (pathname[0] == '/') 
     {
-        // Handle each token for '.' and '..'
-        if (strcmp(token, ".") == 0)
+	absolutePath = pathname;
+    }
+    // Relative path  is affected by current working directory
+    else
+    {
+        // first tokenize and get them as an array
+	char *token = strtok(pathname, "/");
+        while (token != NULL && componentCount < 32)
         {
-            // Current directory remains unchanged
+	    pathComponents[componentCount++] = strdup(token);
+	    token = strtok(NULL, "/");
+
+	    printf("Tokenized pathname : %s \n", pathComponents[componentCount++]);
         }
-        else if (strcmp(token, "..") == 0)
+
+	for (int i = 0; i < componentCount; i++)
         {
-            // Remove the last component from currentDir (go up one directory)
-            char *lastSlash = strrchr(currentDir, '/');
-            if (lastSlash != NULL)
-            {
-                *lastSlash = '\0';
+	    if (pathComponents[i] == ".")
+	    {
+		continue;
+	    }
+	    else if (pathComponents[i] == "..")
+	    {
+		cwdGlobal--;
+		cwd = loadDir(rootDir, cwdGlobal);
+
+	    }
+	    else
+	    {
+		// THis should deal with regular like Dcouments/cat/dang/shit
             }
-        }
-        else
-        {
-            // Normal case: add the token to the array
-            strcpy(tokens[numTokens], token);
-            numTokens++;
-        }
-
-        // Get the next token
-        token = strtok(NULL, "/");
+	}
     }
 
-    // Reconstruct the new path based on the tokens
-    char newPath[256] = "";
-    for (int i = 0; i < numTokens; i++)
-    {
-        strcat(newPath, "/");
-        strcat(newPath, tokens[i]);
-    }
 
-    // Update the current directory path
-    strncpy(currentDir, newPath, sizeof(currentDir));
-    currentDir[sizeof(currentDir) - 1] = '\0';
 
     return 0; // Success
 }
@@ -365,7 +408,7 @@ int fs_isFile(char *filename)
     }
 
     int index = FindEntryInDir(ppi->parent, ppi->lastElement);
-    if (index == -1)
+    if (index == -1) 
     {
         // Entry not found, assuming not a file
         return 0;
@@ -374,8 +417,6 @@ int fs_isFile(char *filename)
     DE *dirEntry = &(ppi->parent[index]);
     int result = dirEntry->isDirectory == 0; // Returns 1 if file (isDirectory == 0), 0 otherwise
 
-    printf("result: %d \n", result);
-    printf("File removed\n");
 
     free(ppi);
     return result;
@@ -394,7 +435,7 @@ int fs_isDir(char *pathname)
     }
 
     int index = FindEntryInDir(ppi->parent, ppi->lastElement);
-    if (index == -1)
+    if (index == -1)  
     {
         // Entry not found, assuming not a directory
         return 0;
@@ -410,41 +451,61 @@ int fs_isDir(char *pathname)
     return result;
 }
 
+
+// delete file (same concept with fs_rmDir)
 int fs_delete(char *filename)
 {
+    printf("fs_delete starts: \n");
+
     // ParsePath
     parsePathInfo *ppi = malloc(sizeof(parsePathInfo));
-    if (parsePath(filename, ppi) != 0)
-        return -1;
+
+    int parsePathResult = parsePath(filename, ppi);
+    printf("parsePathResult : %d \n", parsePathResult);
+
+    if (parsePathResult != 0) return -1; // ParsePath check done(o)
 
     // find index
     int index = FindEntryInDir(ppi->parent, ppi->lastElement);
-    if (index == -1)
-        return -1;
+    printf("index : %d \n", index);
 
-    // load the directory to be removed
-    // DE *dirRemove = loadDir(ppi.parent, index);
+    if (index == -1) return -1;  // find index check done(o)
 
-    // check fs_isFile is 0 --> file (must be return file)
-    if (fs_isFile(filename) != 0)
-        return -1;
+    // check fs_isDir is 1 --> dir (must be return dir)
+    int checkFile = fs_isFile(filename);
+    printf("fs_isDir result: %d \n", checkFile); 
 
-    ppi->parent = &ppi->parent[index];
-    DE *dirRemove = ppi->parent;
+    if (checkFile != 1) return -1; // check fs_isDir check done(o)
+
+    // load the directory that targets to be removed
+    DE *fileRemove = &ppi->parent[index];
+
+    printf("Original File: \n");
+    printf("fileName: %s \n", fileRemove->fileName);
+    printf("fileSize: %d \n", fileRemove->fileSize);
+    printf("isDirectory: %d \n", fileRemove->isDirectory);
+
+
 
     // Release the blokcs associated with dirRemove
-    EXTTABLE *extTable = loadExtent(dirRemove);
+    EXTTABLE *extTable = loadExtent(fileRemove);
 
     for (int i = 0; i < 5; i++)
     {
-        if (extTable->tableArray[i].count > 0)
+        if (extTable[index].tableArray[i].start > 0)
         {
-            releaseBlocks(extTable->tableArray[i].start, extTable->tableArray[i].count);
+            releaseBlocks(extTable[index].tableArray[i].start, extTable[index].tableArray[i].count);
         }
     }
 
-    // Write to the disk (need to modify)
-    //  LBAwrite();
+    markDirUnused(fileRemove);
+
+    writeDir(ppi->parent, index);
+
+    printf("Updated File Remove: \n");
+    printf("fileName: %s \n", fileRemove->fileName);
+    printf("fileSize: %d \n", fileRemove->fileSize);
+    printf("isDirectory: %d \n", fileRemove->isDirectory);
 
     free(ppi);
     return 0;
@@ -482,3 +543,5 @@ int fs_stat(const char *path, struct fs_stat *buf)
 
     return 0; // Success
 }
+
+
