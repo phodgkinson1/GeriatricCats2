@@ -20,12 +20,8 @@ int parsePath(char *path, parsePathInfo *ppi)
 {
 	
 	// check passing
-	printf("parsepath passing check: path: %s\n", path);
-<<<<<<< HEAD
-
-=======
-	printf("parsepath rootGlobal: %d\n", rootGlobal);
->>>>>>> c83d7a8fe822ab03ff50427b9825c959616624e1
+//	printf("parsepath passing check: path: %s\n", path);
+//	printf("parsepath rootGlobal: %d\n", rootGlobal);
 	//	printf("Parsepath pass check: access ppi->lastElement[0]: |%c|\n", ppi-> lastElement[0]);
 	// load root dir, getting size first
 	if (rootDir == NULL)
