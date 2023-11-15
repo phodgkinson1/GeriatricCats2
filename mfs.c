@@ -96,6 +96,7 @@ int fs_mkdir(const char *pathname, mode_t mode)
 int fs_rmdir(const char *pathname)
 {
 // -----------------------------------------------------------------------------
+// This will be created as a helper function somewhere
     printf("fs_rmdir starts: \n");
         // update pathname
         printf("called fs_mkdr with pathname : |%s|\n", pathname);
@@ -137,12 +138,23 @@ int fs_rmdir(const char *pathname)
     // load the directory that targets to be removed
     DE *dirRemove = &ppi->parent[index];
 
-    printf("dirRemove filename: %s \n", dirRemove->fileName); // check dirRemove is targetted based on pathname
-
-// debug until here
+    printf("Original dirRemove: \n");
+    printf("fileName: %s \n", dirRemove->fileName);
+    printf("fileSize: %d \n", dirRemove->fileSize);
+    printf("isDirectory: %d \n", dirRemove->isDirectory);
 
     // by iterating through the entries, check its empty condition
-    if (isDirEmpty(dirRemove) != 1) return -1;
+    // checkDirEmpty == 0 -----> target dir is empty ----> ready to remove
+    int checkDirEmpty = isDirEmpty(dirRemove);
+
+    if (checkDirEmpty != 0) 
+    {
+        free(dirRemove);
+        return -1;
+    }
+    printf("check Dir Empty: %d \n", checkDirEmpty);
+    printf("0 means ready to remove the dir!!\n");
+
 
     // Release the blokcs associated with dirRemove
     EXTTABLE *extTable = loadExtent(dirRemove);
@@ -155,16 +167,18 @@ int fs_rmdir(const char *pathname)
         }
     }
 
-    free(extTable);
-
     markDirUnused(dirRemove);
+
     writeDir(ppi->parent, index);
 
-    free(dirRemove);
+    printf("Updated dirRemove: \n");
+    printf("fileName: %s \n", dirRemove->fileName);
+    printf("fileSize: %d \n", dirRemove->fileSize);
+    printf("isDirectory: %d \n", dirRemove->isDirectory);
+
     free(ppi);
     return 0;
 }
-
 
 fdDir *fs_opendir(const char *pathname)
 	{
