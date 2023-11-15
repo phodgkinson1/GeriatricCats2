@@ -407,44 +407,63 @@ int fs_isDir(char *pathname)
 }
 
 
-
+// delete file (same concept with fs_rmDir)
 int fs_delete(char *filename)
 {
+    printf("fs_delete starts: \n");
+
     // ParsePath
     parsePathInfo *ppi = malloc(sizeof(parsePathInfo));
-    if (parsePath(filename, ppi) != 0) return -1;
+
+    int parsePathResult = parsePath(filename, ppi);
+    printf("parsePathResult : %d \n", parsePathResult);
+
+    if (parsePathResult != 0) return -1; // ParsePath check done(o)
 
     // find index
     int index = FindEntryInDir(ppi->parent, ppi->lastElement);
-    if (index == -1) return -1;
+    printf("index : %d \n", index);
 
-    // load the directory to be removed
-    // DE *dirRemove = loadDir(ppi.parent, index);
+    if (index == -1) return -1;  // find index check done(o)
 
-    // check fs_isFile is 0 --> file (must be return file)
-    if (fs_isFile(filename) != 0) return -1;
+    // check fs_isDir is 1 --> dir (must be return dir)
+    int checkFile = fs_isFile(filename);
+    printf("fs_isDir result: %d \n", checkFile); 
 
-    ppi->parent = &ppi->parent[index];
-    DE *dirRemove = ppi->parent;
+    if (checkFile != 1) return -1; // check fs_isDir check done(o)
+
+    // load the directory that targets to be removed
+    DE *fileRemove = &ppi->parent[index];
+
+    printf("Original File: \n");
+    printf("fileName: %s \n", fileRemove->fileName);
+    printf("fileSize: %d \n", fileRemove->fileSize);
+    printf("isDirectory: %d \n", fileRemove->isDirectory);
+
+
 
     // Release the blokcs associated with dirRemove
-    EXTTABLE *extTable = loadExtent(dirRemove);
+    EXTTABLE *extTable = loadExtent(fileRemove);
 
     for (int i = 0; i < 5; i++)
     {
-        if (extTable->tableArray[i].count > 0)
+        if (extTable[index].tableArray[i].start > 0)
         {
-            releaseBlocks(extTable->tableArray[i].start, extTable->tableArray[i].count);
+            releaseBlocks(extTable[index].tableArray[i].start, extTable[index].tableArray[i].count);
         }
     }
 
+    markDirUnused(fileRemove);
 
-    // Write to the disk (need to modify)
-    //  LBAwrite();
+    writeDir(ppi->parent, index);
+
+    printf("Updated File Remove: \n");
+    printf("fileName: %s \n", fileRemove->fileName);
+    printf("fileSize: %d \n", fileRemove->fileSize);
+    printf("isDirectory: %d \n", fileRemove->isDirectory);
 
     free(ppi);
     return 0;
-
 }
 
 // *********************** NEED TO CEHCK *******************************
