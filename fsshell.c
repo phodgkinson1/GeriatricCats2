@@ -203,7 +203,7 @@ int cmd_ls(int argcnt, char *argvec[])
 				fdDir *dirp;
 				dirp = fs_opendir(argvec[k]);
 				printf("cmd_ls inside for after fs_opendir before calling displayFiles");
-				displayFiles(dirp, flall, fllong);
+				//displayFiles(dirp, flall, fllong);
 			}
 			else // it is just a file ?
 			{
