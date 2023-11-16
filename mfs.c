@@ -320,8 +320,24 @@ int fs_closedir(fdDir *dirPath)
 
 char *fs_getcwd(char *pathname, size_t size)
 {
+    printf("fs_getcwd function called\n");
+    if (size <= 0 || pathname == NULL)
+    {
+        return NULL;
+    }
 
-    
+    // Print the current directory before copying
+    printf("Current directory before copying: %s\n", currentDir);
+
+    // Copy the current directory path into the provided buffer
+    strncpy(pathname, currentDir, size);
+
+    // Ensure the buffer is null-terminated
+    pathname[size - 1] = '\0';
+
+    // Print the current directory after copying
+    printf("Current directory after copying: %s\n", currentDir);
+
     return pathname;
 }
 
