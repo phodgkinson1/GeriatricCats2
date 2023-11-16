@@ -6,10 +6,9 @@
 #include "vcb.h"
 
 // Global variables
-DE * rootDir;
-DE * cwd;
-int cwdGlobal;
-char *absolutePath;
+extern DE * rootDir;
+extern DE * cwd;
+extern char *cwdAbsolutePath;
 
 // if -1 then directory or file does not exist
 //  ex) /home/studnet/Documents/foo

@@ -20,9 +20,9 @@ int fs_mkdir(const char *pathname, mode_t mode)
     strcpy(newDir, currentDir);
     printf("pathname 0 char : |%c|\n", pathname[0] != '/');
     if (currentDir[strlen(currentDir) - 1] != '/' && pathname[0] != '/')
-    {
+    	{
         strcat(newDir, "/");
-    }
+    	}
     strcat(newDir, pathname);
     printf("newdir pathname : |%s|\n", newDir);
 
@@ -35,21 +35,25 @@ int fs_mkdir(const char *pathname, mode_t mode)
         free(newDir);
 
     if (pathValidity != 0)
-    {
+    	{
         printf("Invalid path!\n");
         return -1;
-    }
-
+    	}
+    if (ppiTest->indexOfLastElement != -1)
+	{
+	printf("already a directory with same name.\n");
+	return -1;
+	}
     // printf("ppi members- parent->filesize: %d, lastElement[0]: %s, indexOfLastElement: %d\n",
     // ppiTest->parent->fileSize, ppiTest->lastElement, ppiTest->indexOfLastElement);
     char *empty = malloc(1);
     empty[0] = '\0';
     int nextAvailable = FindEntryInDir(ppiTest->parent, empty);
     if (nextAvailable == -1)
-    {
+    	{
         printf("Directory at capacity.\n");
         return -1;
-    }
+    	}
 
     // load parent
     int startBlockNewDir = initDir(DEFAULT_ENTRIES, ppiTest->parent, nextAvailable);
@@ -282,7 +286,7 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
             return NULL;
         }
     }
-
+/*
     // copy the name of currenct directory to fs_diriteminfo
     strcpy(dirPath->di->d_name, dirPath->directory[dirPath->dirEntryPosition].fileName);
     printf("di->d_name: %s\n", dirPath->di->d_name);
@@ -299,7 +303,7 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
 
     // update positon for next iteration
     dirPath->dirEntryPosition++;
-
+*/
     return dirPath->di;
     
 }
@@ -322,80 +326,90 @@ char *fs_getcwd(char *pathname, size_t size)
 }
 
 
-int fs_setcwd(char *pathname) {
+int fs_setcwd(char *pathname)
+	{
+    	printf("fs_setcwd starts: \n");
 
-    printf("fs_setcwd starts: \n");
+ 	char *pathComponents[32];
+	int componentCount = 0;
+ 	char *newPath = malloc(256);
+        if(pathname[0]=='/') strcat (newPath, "/");
 
-    // ParsePath
-    parsePathInfo *ppi = malloc(sizeof(parsePathInfo));
+    	// first tokenize path compnents to array an parse '.' and '..'
+	char *saveptr= NULL;
+   	char *token = strtok_r(pathname, " /", &saveptr);
+	if(token !=NULL)
+		{
+		pathComponents[componentCount]=strdup(token);
+		printf("token %d: |%s| pathComponents[%d]: |%s|\n",  componentCount, token, componentCount, pathComponents[componentCount]);
+		componentCount++;
+		}
+	while (token != NULL && componentCount < 32)
+    		{
+		token= strtok_r(NULL, " /", &saveptr);
+		if (token==NULL) break;
 
-    int parsePathResult = parsePath(pathname, ppi);
-    printf("parsePathResult : %d \n", parsePathResult);
+		if(token[1]== '.')
+			{
+				componentCount--;
+				pathComponents[componentCount]=NULL;
+			}
+		if(token[0] != '.' && token[1] != '.')
+			{
+ 			pathComponents[componentCount]= strdup(token);
+                	componentCount++;
+			}
+		}
 
-    if (parsePathResult != 0) return -1; // ParsePath check done(o)
+		printf("value of cwdAbsolutepath: |%s|\n", cwdAbsolutePath);
+		//add cwd to path
+		if(pathname[0] != '/')
+			{
+			strcat(newPath, cwdAbsolutePath);
+			}
 
-    // find index
-    int index = FindEntryInDir(ppi->parent, ppi->lastElement);
-    printf("index : %d \n", index);
+		for(int i=0; i<componentCount; i++){
+		printf("pathComponents at i: % is %s\n", i, pathComponents[i]);
+		strcat(newPath, pathComponents[i]);
+		if(i != componentCount-1) strcat(newPath, "/");
+		}
+		printf("new string newPath: |%s|\n", newPath);
 
-    if (index == -1) return -1;  // find index check done(o)
+    		// ParsePath
+    		parsePathInfo *ppi = malloc(sizeof(parsePathInfo));
+    		int parsePathResult = parsePath(pathname, ppi);
+    		printf("parsePathResult : %d \n", parsePathResult);
 
-    // Check if the target is a directory
-    if (!isDirectory(&ppi->parent[ppi->indexOfLastElement])) {
-        return -1; // Target is not a directory
-    }
+    		if (parsePathResult != 0) return -1; // ParsePath check done(o)
 
-    // Free the previous cwd if it is not the root directory
-    if (cwd != rootDir) free(cwd);
+    		// find index
+    		int index = FindEntryInDir(ppi->parent, ppi->lastElement);
+    		printf("index : %d \n", index);
 
-    cwd = loadDir(ppi->parent, index);
+    		if (index == -1) return -1;  // find index check done(o)
 
-    char *pathComponents[32];
-    int componentCount = 0;
-    cwdGlobal = index;
-    printf("cwdGlobal before iterating through: %d \n", cwdGlobal);
-// -----------------------------------------------------------------
+    		// Check if the target is a directory
+    		if (!isDirectory(&ppi->parent[ppi->indexOfLastElement]))
+			{
+  			printf("%s is not a directory \n", ppi->lastElement);
+			return -1; // Target is not a directory
+    			}
 
-    // Absolute path, which always start from /
-    if (pathname[0] == '/') 
-    {
-	absolutePath = pathname;
-    }
-    // Relative path  is affected by current working directory
-    else
-    {
-        // first tokenize and get them as an array
-	char *token = strtok(pathname, "/");
-        while (token != NULL && componentCount < 32)
-        {
-	    pathComponents[componentCount++] = strdup(token);
-	    token = strtok(NULL, "/");
+		free(cwdAbsolutePath);
+ 		cwdAbsolutePath= newPath;
+                printf("stored in cwdAbsolutePath: |%s|\n", cwdAbsolutePath);
 
-	    printf("Tokenized pathname : %s \n", pathComponents[componentCount++]);
-        }
+		// Free the previous cwd if it is not the root directory
+    		if (cwd != rootDir) free(cwd);
+		
+    		cwd = loadDir(ppi->parent, index);
+		printf("cwd filename: |%s|\n", ppi->parent[index].fileName);
 
-	for (int i = 0; i < componentCount; i++)
-        {
-	    if (pathComponents[i] == ".")
-	    {
-		continue;
-	    }
-	    else if (pathComponents[i] == "..")
-	    {
-		cwdGlobal--;
-		cwd = loadDir(rootDir, cwdGlobal);
-
-	    }
-	    else
-	    {
-		// THis should deal with regular like Dcouments/cat/dang/shit
-            }
-	}
-    }
-
-
-
-    return 0; // Success
+//cleanup
+	if(cwdAbsolutePath != newPath) free(newPath);
+	if(ppi->parent == NULL) free(ppi->parent);
+	if (ppi !=NULL) free(ppi);
+    	return 0; // Success
 }
 
 // fs_isFIle and fs_isDir are similar

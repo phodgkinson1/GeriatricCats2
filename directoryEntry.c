@@ -97,11 +97,13 @@ int initDir(int defaultEntries, struct DE * parent, int parentIndex)
 		printf("dir[1].fileName: %s\n", dir[1].fileName);
 
 		rootGlobal = dirStart;
-		cwdGlobal= rootGlobal;
       		//assign global
         	rootDir=dir;
-
-   		}
+		cwdAbsolutePath= malloc(2);
+		//strcpy(cwdAbsolutePath, "/");
+   		cwdAbsolutePath[0]='/';
+		cwdAbsolutePath[1]='\0';
+		}
     	else
 	    	{
 //		printf("entered else loop\n");
