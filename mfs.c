@@ -573,9 +573,6 @@ int fs_delete(char *filename)
     return 0;
 }
 
-// *********************** NEED TO CEHCK *******************************
-// This would be used in "ls" and "touch" command?
-// **** dont know how to check ****
 int fs_stat(const char *path, struct fs_stat *buf)
 {
     printf("fs_stat function called with path: %s\n", path);
@@ -585,23 +582,36 @@ int fs_stat(const char *path, struct fs_stat *buf)
     }
 
     // Parse the path to find the file or directory
-    parsePathInfo ppi;
-    if (parsePath((char *)path, &ppi) < 0)
+    parsePathInfo *ppi = malloc(sizeof(parsePathInfo));
+    int parsePathResult = parsePath((char *)path, ppi);
+
+    if (parsePathResult != 0)
     {
+        printf("PARSE PATH FAILED");
         return -1; // Parsing failed
     }
 
     // Check if the file or directory specified by 'path' exists
-    int entryIndex = FindEntryInDir(ppi.parent, ppi.lastElement);
-    if (entryIndex < 0)
+    int index = FindEntryInDir(ppi->parent, ppi->lastElement);
+    if (index < 0)
     {
+        printf("INDEX RETRIEVE FAILED");
         return -1; // File or directory does not exist
     }
 
-    // Fill in 'buf' with file/directory statistics
-    buf->st_size = 0;      // Replace with actual file size
-    buf->st_blksize = 512; // Blocksize for file system I/O (modify as needed)
-    buf->st_blocks = 0;    // Calculate the number of 512B blocks
+    // fill in dir->information into buf->information
+
+    DE *dir = &(ppi->parent[index]);
+
+    buf->st_size = dir->fileSize;
+    buf->st_blksize = BLOCK_SIZE;
+    buf->st_blocks = (dir->fileSize + BLOCK_SIZE -1) / BLOCK_SIZE;
+    buf->st_accesstime = dir->lastAccessedTime;
+    buf->st_modtime = dir->modifiedTime;
+    buf->st_createtime = dir->createdTime;
+    buf->st_isdir = dir->isDirectory;
+
+    free(ppi);
 
     return 0; // Success
 }
