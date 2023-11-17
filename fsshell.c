@@ -202,8 +202,8 @@ int cmd_ls(int argcnt, char *argvec[])
 				printf("inside cmd_ls if(fs_isDir)\n");
 				fdDir *dirp;
 				dirp = fs_opendir(argvec[k]);
-				printf("cmd_ls inside for after fs_opendir before calling displayFiles");
-				//displayFiles(dirp, flall, fllong);
+				printf("cmd_ls inside for after fs_opendir before calling displayFiles\n");
+				displayFiles(dirp, flall, fllong);
 			}
 			else // it is just a file ?
 			{
