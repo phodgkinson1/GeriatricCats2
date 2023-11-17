@@ -308,19 +308,26 @@ char *fs_getcwd(char *pathname, size_t size)
     {
         return NULL;
     }
-    // this is not our current directory string. we are using cwdAbsolutePath. currentDir will be moved into a helper function later.
 
-    // Print the current directory before copying
-    printf("Current directory before copying: %s\n", currentDir);
+   // to check
+   // long cwd = 4096;
 
-    // Copy the current directory path into the provided buffer
-    strncpy(pathname, currentDir, size);
+    if (strlen(cwdAbsolutePath) > size -1)
+    {
+        printf("buffer size is not fit into cwdAbsolutePath");
+        return NULL;
+    }
 
-    // Ensure the buffer is null-terminated
-    pathname[size - 1] = '\0';
+    printf("cwdAbsolutePath's length: %ld \n", strlen(cwdAbsolutePath));
+    printf("Limitation of buffer size: %ld \n", size -1);
 
-    // Print the current directory after copying
-    printf("Current directory after copying: %s\n", currentDir);
+
+    strncpy(pathname, cwdAbsolutePath, size);
+
+    pathname[size -1] = '\0';
+
+    printf("fs_getcwd: %s \n", pathname);
+
     return pathname;
 }
 
@@ -363,10 +370,15 @@ int fs_setcwd(char *pathname)
     }
 
     printf("value of cwdAbsolutepath: |%s|\n", cwdAbsolutePath);
-    // add cwd to path
+    //add cwd to path (RElative)
     if (pathname[0] != '/')
     {
-        strcat(newPath, cwdAbsolutePath);
+        strcpy(newPath, cwdAbsolutePath);
+        // Ensure there's a trailing slash after cwdAbsolutePath, if not already present
+        if (cwdAbsolutePath[strlen(cwdAbsolutePath) - 1] != '/')
+        {
+             strcat(newPath, "/");
+        }
     }
 
     for (int i = 0; i < componentCount; i++)
