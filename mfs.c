@@ -14,25 +14,17 @@ int fs_mkdir(const char *pathname, mode_t mode)
 {
     // update pathname
     printf("called fs_mkdr with pathname : |%s|\n", pathname);
+	if (pathname == NULL) return -1;
 														// ******* add condition here to check if cdw==rootDir if no absolute
     // update pathname with new element
-    char *newDir = malloc(256);
-    strcpy(newDir, currentDir);
-    printf("pathname 0 char : |%c|\n", pathname[0] != '/');
-    if (currentDir[strlen(currentDir) - 1] != '/' && pathname[0] != '/')
-    	{
-        strcat(newDir, "/");
-    	}
-    strcat(newDir, pathname);
-    printf("newdir pathname : |%s|\n", newDir);
+	char * newPath= pathUpdate(pathname);
 
     parsePathInfo *ppiTest = malloc(sizeof(parsePathInfo));
     // ppiTest->lastElement[0]= 'E';test for structure passing
     // parsePath returns 0 if valid path for a directory, -2 if invalid
-    int pathValidity = parsePath(newDir, ppiTest);
+    int pathValidity = parsePath(newPath, ppiTest);
     //	printf("parsePath returned : %d\n", pathValidity);
-    if (newDir != NULL)
-        free(newDir);
+	if(newPath != NULL)	free(newPath);
 
     if (pathValidity != 0)
     	{
@@ -108,30 +100,20 @@ int fs_mkdir(const char *pathname, mode_t mode)
 int fs_rmdir(const char *pathname)
 {
 // -----------------------------------------------------------------------------
-// This will be created as a helper function somewhere
-    printf("fs_rmdir starts: \n");
-        // update pathname
+   	 printf("fs_rmdir starts: \n");
         printf("called fs_mkdr with pathname : |%s|\n", pathname);
 
-        // update pathname with new element
-        char *newDir = malloc(256);
-        strcpy(newDir, currentDir);
-        printf("pathname 0 char : |%c|\n", pathname[0] != '/');
-        if (currentDir[strlen(currentDir) - 1] != '/' && pathname[0] != '/')
-                {
-                strcat(newDir, "/");
-                }
-        strcat(newDir, pathname);
-        printf("newdir pathname : |%s|\n", newDir);
+	if(pathname == NULL) return -1;
 
-// -----------------------------------------------------------------------------
-
+	// update pathname with new element
+        char * newPath= pathUpdate(pathname);
 
     // ParsePath
     parsePathInfo *ppi = malloc(sizeof(parsePathInfo));
 
-    int parsePathResult = parsePath((char *)pathname, ppi);
+    int parsePathResult = parsePath(newPath, ppi);
     printf("parsePathResult : %d \n", parsePathResult);
+	if (newPath !=NULL) free(newPath);
 
     if (parsePathResult != 0) return -1; // ParsePath check done(o)
 
@@ -202,25 +184,18 @@ fdDir *fs_opendir(const char *pathname)
         return NULL;
     }
 
-    // update pathname with new element
-    char *newDir = malloc(256 * sizeof(char));
-    strcpy(newDir, currentDir);
-    printf("pathname 0 char : |%c|\n", pathname[0] != '/');
-    if (currentDir[strlen(currentDir) - 1] != '/' && pathname[0] != '/')
-    {
-        strcat(newDir, "/");
-    }
-    strcat(newDir, pathname);
-    printf("newdir pathname : |%s|\n", newDir);
+ // update pathname with new element
+        char * newPath= pathUpdate(pathname);
 
     // initilize a directory and a parsePathInfo struct
     DE *myDir;
     parsePathInfo *ppi = malloc(sizeof(parsePathInfo));
 
     // call parsePath() to traverse and update ppi
-    int parsePathCheck = parsePath(newDir, ppi);
+    int parsePathCheck = parsePath(newPath, ppi);
     printf("Inside fs_opendir return value of parsePath(): %d\n", parsePathCheck);
     printf("Inside fs_opendir ppi indexOfLast Element: %d\n", ppi->indexOfLastElement);
+	if (newPath !=NULL) free(newPath);
 
     // check if directory with pathname exists
     if (parsePathCheck != 0)
@@ -354,6 +329,7 @@ int fs_setcwd(char *pathname)
     	// first tokenize path compnents to array an parse '.' and '..'
 	char *saveptr= NULL;
    	char *token = strtok_r(pathname, " /", &saveptr);
+
 	if(token !=NULL)
 		{
 		pathComponents[componentCount]=strdup(token);
@@ -384,11 +360,12 @@ int fs_setcwd(char *pathname)
 			strcat(newPath, cwdAbsolutePath);
 			}
 
-		for(int i=0; i<componentCount; i++){
-		printf("pathComponents at i: % is %s\n", i, pathComponents[i]);
-		strcat(newPath, pathComponents[i]);
-		if(i != componentCount-1) strcat(newPath, "/");
-		}
+		for(int i=0; i<componentCount; i++)
+			{
+			printf("pathComponents at i: % is %s\n", i, pathComponents[i]);
+			strcat(newPath, pathComponents[i]);
+			if(i != componentCount-1) strcat(newPath, "/");
+			}
 		printf("new string newPath: |%s|\n", newPath);
 
     		// ParsePath

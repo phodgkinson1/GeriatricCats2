@@ -131,6 +131,26 @@ int parsePath(char *path, parsePathInfo *ppi)
 	}
 }
 
+
+char * pathUpdate(const char * pathname)
+	{
+
+	char *newDir = malloc(256);
+    	if(pathname[0] != '/')
+		{
+		strcpy(newDir, cwdAbsolutePath);
+    		printf("pathname 0 char : |%c|\n", pathname[0] != '/');
+    		if (cwdAbsolutePath[strlen(cwdAbsolutePath) - 1] != '/' && pathname[0] != '/')
+        		{
+        		strcat(newDir, "/");
+        		}
+		}
+    		strcat(newDir, pathname);
+    	printf("newdir pathname : |%s|\n", newDir);
+	return newDir;
+	}
+
+
 // Check the whether Directory entry named fileName is existed or not
 // Return value: integer
 int FindEntryInDir(DE *dir, char *fileName)
