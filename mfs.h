@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <directoryEntry.h>
+#include <mfsHelper.h>
 
 #include "b_io.h"
 
