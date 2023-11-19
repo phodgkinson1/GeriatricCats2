@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include "mfsHelper.h"
 
-
 int fs_mkdir(const char *pathname, mode_t mode)
 {
     // update pathname
@@ -63,20 +62,19 @@ int fs_mkdir(const char *pathname, mode_t mode)
     if (ext != NULL)
         free(ext);
 
-
     // update directory entry name for new directory
     char *copy = ppiTest->lastElement;
     int i = 0;
     while (copy[i])
-    	{
+    {
         ppiTest->parent[nextAvailable].fileName[i] = copy[i];
         i++;
-    	}
+    }
 
     copy = NULL;
 
-//    printf("new filename at  ppiTest->parent[nextAvailable].fileName: |%s|\n",
-//           ppiTest->parent[nextAvailable].fileName);
+    //    printf("new filename at  ppiTest->parent[nextAvailable].fileName: |%s|\n",
+    //           ppiTest->parent[nextAvailable].fileName);
 
     printf("inside mk dir- parent[2] startextentblock: %d\n", ppiTest->parent[nextAvailable].extentBlockStart);
 
@@ -84,10 +82,10 @@ int fs_mkdir(const char *pathname, mode_t mode)
 
     writeDir(loadDir(ppiTest->parent, nextAvailable), startBlockNewDir);
 
-	if(ppiTest->parent[1].extentBlockStart == cwd[1].extentBlockStart)
-	{
-	cwd=ppiTest->parent;
-	}
+    if (ppiTest->parent[1].extentBlockStart == cwd[1].extentBlockStart)
+    {
+        cwd = ppiTest->parent;
+    }
 
     // cleanup
     if (ppiTest != NULL)
@@ -177,7 +175,8 @@ int fs_rmdir(const char *pathname)
     printf("fileSize: %d \n", dirRemove->fileSize);
     printf("isDirectory: %d \n", dirRemove->isDirectory);
 
-    if (ppi !=NULL) free(ppi);
+    if (ppi != NULL)
+        free(ppi);
     return 0;
 }
 
@@ -242,6 +241,7 @@ fdDir *fs_opendir(const char *pathname)
 
     printf("End of fs_opendir\n");
     // cleanup
+
     if (myDir)
         free(myDir);
     if (ppi)
@@ -263,12 +263,20 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
     printf("fs_readdir directoryEntries value: %d\n", directoryEntries);
     printf("dirPath->dirEntryPosition: %d\n", dirPath->dirEntryPosition);
 
+    if (dirPath == NULL || dirPath->directory == NULL)
+    {
+        printf("dirPath is NULL\n");
+        return NULL;
+    }
+
+    printf("After checking if dirPath = NULL\n");
+
     // check if the directory entry is being used, iterate until you find a use entry
     while (dirPath->directory[dirPath->dirEntryPosition].fileName[0] == '\0')
     {
-        printf("Inside while loop");
+        printf("Inside while loop\n");
         dirPath->dirEntryPosition++;
-        if (dirPath->dirEntryPosition >= directoryEntries-1)
+        if (dirPath->dirEntryPosition >= directoryEntries)
         {
             return NULL;
         }
@@ -279,7 +287,7 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
     printf("di->d_name: %s\n", dirPath->di->d_name);
 
     // check the type of the directory
-    if (isDirectory(dirPath->directory) == 1)
+    if (isDirectory(&dirPath->directory[dirPath->dirEntryPosition]) == 1)
     {
         dirPath->di->fileType = 'd';
     }
@@ -312,22 +320,21 @@ char *fs_getcwd(char *pathname, size_t size)
         return NULL;
     }
 
-   // to check
-   // long cwd = 4096;
+    // to check
+    // long cwd = 4096;
 
-    if (strlen(cwdAbsolutePath) > size -1)
+    if (strlen(cwdAbsolutePath) > size - 1)
     {
         printf("buffer size is not fit into cwdAbsolutePath");
         return NULL;
     }
 
     printf("cwdAbsolutePath's length: %ld \n", strlen(cwdAbsolutePath));
-    printf("Limitation of buffer size: %ld \n", size -1);
-
+    printf("Limitation of buffer size: %ld \n", size - 1);
 
     strncpy(pathname, cwdAbsolutePath, size);
 
-    pathname[size -1] = '\0';
+    pathname[size - 1] = '\0';
 
     printf("fs_getcwd: %s \n", pathname);
 
@@ -454,13 +461,14 @@ int fs_setcwd(char *pathname)
 }
 
 
+
 // fs_isFIle and fs_isDir are similar
 // The difference is  when file: return 0; when dir: return 1;
 // This distinction is written in isDir(DE *dir) a helper function
 
 int fs_isFile(char *filename)
 {
- if (filename == NULL)
+    if (filename == NULL)
     {
         printf("invalid file name\n");
         return -1;
@@ -472,9 +480,11 @@ int fs_isFile(char *filename)
     parsePathInfo *ppi;
     ppi = malloc(sizeof(parsePathInfo)); // Allocate and initialize ppi
 
-    if (parsePath(filename, ppi) != 0) return 0;
-       
- if (newPath != NULL) free(newPath);
+    if (parsePath(filename, ppi) != 0)
+        return 0;
+
+    if (newPath != NULL)
+        free(newPath);
 
     int index = FindEntryInDir(ppi->parent, ppi->lastElement);
     if (index == -1)
@@ -482,7 +492,6 @@ int fs_isFile(char *filename)
         // Entry not found, assuming not a file
         return 0;
     }
-
 
     DE *dirEntry = &(ppi->parent[index]);
     int result = dirEntry->isDirectory == 0; // Returns 1 if file (isDirectory == 0), 0 otherwise
@@ -494,7 +503,7 @@ int fs_isFile(char *filename)
 // return 0 if file, returns 1 if dir
 int fs_isDir(char *pathname)
 {
- if (pathname == NULL)
+    if (pathname == NULL)
     {
         printf("invalid pathname\n");
         return -1;
@@ -513,7 +522,8 @@ int fs_isDir(char *pathname)
         // Parsing failed, assuming not a directory
         return 0;
     }
-	if (newPath != NULL) free(newPath);
+    if (newPath != NULL)
+        free(newPath);
 
     int index = FindEntryInDir(ppi->parent, ppi->lastElement);
     if (index == -1)
@@ -624,7 +634,7 @@ int fs_stat(const char *path, struct fs_stat *buf)
 
     buf->st_size = dir->fileSize;
     buf->st_blksize = BLOCK_SIZE;
-    buf->st_blocks = (dir->fileSize + BLOCK_SIZE -1) / BLOCK_SIZE;
+    buf->st_blocks = (dir->fileSize + BLOCK_SIZE - 1) / BLOCK_SIZE;
     buf->st_accesstime = dir->lastAccessedTime;
     buf->st_modtime = dir->modifiedTime;
     buf->st_createtime = dir->createdTime;
