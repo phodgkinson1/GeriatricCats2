@@ -251,7 +251,7 @@ fdDir *fs_opendir(const char *pathname)
     printf("Inside of fs_opendir ppi->indexOfLastElement: %d\n", ppi->indexOfLastElement);
 
     fdDir *fdd = malloc(sizeof(fdDir));
-
+	
     fdd->directory = myDir;
     printf("openDir fdd->firectory.isDirectory: %d\n", fdd->directory->isDirectory);
     fdd->dirEntryPosition = 0;
@@ -260,13 +260,13 @@ fdDir *fs_opendir(const char *pathname)
     printf("End of fs_opendir\n");
     // cleanup
 
+
 	if(ppi->parent != rootDir && ppi->parent != cwd)
                 {
                 free(ppi->parent);
                 }
 
-    if (ppi)
-        free(ppi);
+    if (ppi!= NULL) free(ppi);
 
     return (fdd);
 }
@@ -302,6 +302,9 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
             return NULL;
         }
     }
+
+	struct fs_diriteminfo * dii= malloc(sizeof(struct fs_diriteminfo));
+	dirPath->di= dii;
 
     // copy the name of currenct directory to fs_diriteminfo
     strcpy(dirPath->di->d_name, dirPath->directory[dirPath->dirEntryPosition].fileName);
