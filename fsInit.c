@@ -42,12 +42,16 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 
     //initialize a buffer to check for volume control block
     struct VCB *vcb = malloc(BLOCK_SIZE * sizeof(char));
-  //  struct DE * de = malloc(BLOCK_SIZE);
 
     // LBAread vcb from [0] for 1 block, VCB starts from 0 and is one block
  	if( LBAread(vcb, 1, 0) !=  1)
                 {
                 printf("LBAread vcb error!\n");
+		if(vcb != NULL)
+			{
+			free(vcb);
+			vcb=NULL;
+			}
                 exit(1);
                 }
 
@@ -69,21 +73,20 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
     	{
 //        printf("signature: %ld\n", vcb->signature);
 //        printf("SIGNATURE: %ld\n", SIGNATURE);
-	// Update needed
 //	printf("\n\n Entered condition to initialize volume \n");
 
         //  *****  Initialize File System *****
 	// (1) Initialize the values in the VCB (volume control block)
 	initVCB(vcb);
 
-//	printf("***** After Initializing VCB ***** \n");
-//        printf("signature: %ld\n", vcb->signature);
-//	printf("total num blocks: %d\n", vcb->totalNumBlocks);
-//	printf("block size: %d\n", vcb->sizeOfBlock);
+	printf("***** After Initializing VCB ***** \n");
+        printf("signature: %ld\n", vcb->signature);
+	printf("total num blocks: %d\n", vcb->totalNumBlocks);
+	printf("block size: %d\n", vcb->sizeOfBlock);
 
 	// (2) Initialize free space management
 	int fsmReturn = initFreeSpace(numberOfBlocks, blockSize);
-//	printf("start FSM: %d\n",startFreeSpaceManagement);
+	printf("start FSM: %d\n",fsmReturn);
 	vcb->startFreeSpaceManagement= fsmReturn;
 
     	//write vcb
@@ -93,22 +96,17 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
                 exit(1);
                 }
 
-        if(vcb) free(vcb);
-	vcb=NULL;
-
 	// (3) Initialize root directory
       	int startDirectory = initDir(DEFAULT_ENTRIES, NULL, 0);
-//        printf("startDirectory: %d\n", startDirectory);
-
-//	int returnCheck= LBAread(de, 1, 6);
-//	printf("returnCheck: %d, de[0].fileName: %s\n", returnCheck, de[0].fileName);
-
-//	int subDirReturn = initDir(DEFAULT_ENTRIES, *&de);
-//	printf("subDirReturn: %d\n", subDirReturn);
-
-//test only	releaseBlocks(0, 2);
-//	free(de);
+        printf("startDirectory: %d\n", startDirectory);
     	}
+     	if(vcb != NULL)
+                {
+                free(vcb);
+                vcb=NULL;
+                }
+
+
 
     	return 0;
 }
@@ -128,9 +126,17 @@ void exitFileSystem ()
                 exit(1);
                 }
 
-        if (bitmapGlobal != NULL) free(bitmapGlobal);//release freespace
-	bitmapGlobal=NULL;
-	if(cwd != NULL) free(cwd);
-	if(rootDir != NULL) free(rootDir);
-    	printf ("System exiting\n");
+        if (bitmapGlobal != NULL)
+		{
+		free(bitmapGlobal);//release freespace
+		bitmapGlobal=NULL;
+		}
+
+	if(rootDir != NULL)
+		{
+		free(rootDir);
+    		rootDir=NULL;
+		}
+
+	printf ("System exiting\n");
 }

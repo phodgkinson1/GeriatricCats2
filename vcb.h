@@ -22,7 +22,7 @@ typedef struct VCB {
     int totalNumBlocks;     // total blocks in entire volume including VCB
     int sizeOfBlock;        // bytes per block (512)
     int startFreeSpaceManagement;
-    int startDirectory;
+//    int startDirectory;
 } VCB;
 
 void initVCB(VCB *vcb);

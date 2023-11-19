@@ -14,14 +14,13 @@ int initFreeSpace (int blockCount, int bytesPerBlock)
 	{
 
 	// Calculate the size of the bitmap in bytes
-	int bitmapSize = blockCount / 8;
+	bytesInBitmap = blockCount / 8;
 
-	if (bitmapSize % BLOCK_SIZE > 0)
+	if (bytesInBitmap % BLOCK_SIZE > 0)
 		{
-		bitmapSize = BLOCK_SIZE * (bitmapSize / BLOCK_SIZE + 1);
+		bytesInBitmap = BLOCK_SIZE * (bytesInBitmap / BLOCK_SIZE + 1);
 		}
-        bytesInBitmap = bitmapSize;
-	int freeSpaceBlockCounts = bitmapSize / BLOCK_SIZE;
+	int freeSpaceBlockCounts = bytesInBitmap / BLOCK_SIZE;
 
 	// Just for variable check
 //	printf("bitmapSize: %d\n", bitmapSize); // 2560
@@ -30,11 +29,10 @@ int initFreeSpace (int blockCount, int bytesPerBlock)
 //	printf("FreeSpace block counts: %d\n", freeSpaceBlockCounts); // 5
 
 	// Allocate a memory of bitmap based on bitmapSize
-	unsigned char * bitmap = malloc(bitmapSize);
-	bitmapGlobal = bitmap;
+	 bitmapGlobal= malloc(bytesInBitmap);
 
 	//initialize every bit on the bitmap to 0
-	memset(bitmap, 0, bitmapSize);
+	memset(bitmapGlobal, 0, bytesInBitmap);
 
 	//marked the first 6 bits to used, block 0 for VCB + blocks 1-5 for the bitmap
 	for (int i = 0; i < freeSpaceBlockCounts + 1; i++)
@@ -42,7 +40,7 @@ int initFreeSpace (int blockCount, int bytesPerBlock)
 		int byteIndex = i / 8; //Find the index of the byte
 		int bitIndex =  i % 8; //Find index of bit inside the byte
 		uint64_t mask= 1;
-		bitmap[byteIndex] |= (mask << bitIndex); //set the bit to one
+		bitmapGlobal[byteIndex] |= (mask << bitIndex); //set the bit to one
 		}
 
 /*
@@ -68,7 +66,6 @@ int initFreeSpace (int blockCount, int bytesPerBlock)
 				}
   */              
 
-	bitmap = NULL;
 	//return the block where the free space starts
 	return 1;
 }
@@ -81,18 +78,17 @@ int loadFreeSpace (int blockCount, int bytesPerBlock)
 	// Calculate size of bitmap in bytes again (same concept just as initFreeSpace)
 	// Again if default blockCount is 19531, divided by 8 is 2441
 	// 2441 % 5 > 0, so round up, --> 4 + 1 = 5 
-	int bitmapSize = blockCount / 8;
-        if (bitmapSize % BLOCK_SIZE > 0)
+	int bytesInBitmap = blockCount / 8;
+        if (bytesInBitmap % BLOCK_SIZE > 0)
 	        {
-                bitmapSize = BLOCK_SIZE * (bitmapSize / BLOCK_SIZE + 1); // --> 5
+                bytesInBitmap = BLOCK_SIZE * (bytesInBitmap / BLOCK_SIZE + 1); // --> 5
         	}
-	bytesInBitmap = bitmapSize;
 
 	// Allocate memory for the bitmap
-	unsigned char * bitmap = malloc(bitmapSize);
+	bitmapGlobal = malloc(bytesInBitmap);
 
 	// Based on the bitmapSize, find the freeSpaceBlockCounts like previous step
-	int freeSpaceBlockCounts = bitmapSize / BLOCK_SIZE;
+	int freeSpaceBlockCounts = bytesInBitmap / BLOCK_SIZE;
 
         // Just for variable check
 //        printf("bitmapSize: %d\n", bitmapSize); // 2560
@@ -103,7 +99,7 @@ int loadFreeSpace (int blockCount, int bytesPerBlock)
 
 	// Read the free space map from the disk
 	// read from block 1 until 5 blocks
-	if(LBAread(bitmap, freeSpaceBlockCounts, 1) != 1)
+	if(LBAread(bitmapGlobal, freeSpaceBlockCounts, 1) != 1)
                 {
                 printf("LBAread() error!\n");
                 exit(1);
@@ -122,7 +118,6 @@ int loadFreeSpace (int blockCount, int bytesPerBlock)
                 }
         printf("|end bitmap \n");
 */
-	bitmap = NULL;
 	// ready to use free space system
 	return 1;
 }
@@ -318,8 +313,11 @@ EXTENT * allocateBlocks (int required, int minPerExtent)
 		if(total > 0)
 			{
 			printf("no space for %d blocks\n", required);
-			if(tempArray !=NULL) free(tempArray);
-			tempArray=NULL;
+			if(tempArray !=NULL)
+				{
+				free(tempArray);
+				tempArray=NULL;
+				}
 			}
 
 		return tempArray;

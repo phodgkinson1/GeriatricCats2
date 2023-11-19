@@ -90,6 +90,10 @@ int fs_mkdir(const char *pathname, mode_t mode)
     // cleanup
     if (ppiTest != NULL)
     {
+	if(ppiTest->parent != rootDir && ppiTest->parent != cwd)
+		{
+		free(ppiTest->parent);
+		}
         free(ppiTest);
         ppiTest = NULL;
     }
@@ -148,10 +152,15 @@ int fs_rmdir(const char *pathname)
     int checkDirEmpty = isDirEmpty(dirRemove);
 
     if (checkDirEmpty != 0)
-    {
-        free(dirRemove);
-        return -1;
-    }
+    	{ 
+     	if(dirRemove != NULL & ppi->parent != cwd && ppi->parent !=rootDir)
+		{
+		free(ppi->parent);
+		}
+	dirRemove=NULL;
+	return -1;
+    	}
+
     printf("check Dir Empty: %d \n", checkDirEmpty);
     printf("0 means ready to remove the dir!!\n");
 
@@ -175,9 +184,18 @@ int fs_rmdir(const char *pathname)
     printf("fileSize: %d \n", dirRemove->fileSize);
     printf("isDirectory: %d \n", dirRemove->isDirectory);
 
+	if(ppi->parent != rootDir && ppi->parent != cwd)
+                {
+                free(ppi->parent);
+                }
+
     if (ppi != NULL)
+	{
         free(ppi);
-    return 0;
+	ppi=NULL;
+	}
+ 
+  return 0;
 }
 
 fdDir *fs_opendir(const char *pathname)
@@ -241,6 +259,11 @@ fdDir *fs_opendir(const char *pathname)
 
     printf("End of fs_opendir\n");
     // cleanup
+
+	if(ppi->parent != rootDir && ppi->parent != cwd)
+                {
+                free(ppi->parent);
+                }
 
     if (ppi)
         free(ppi);
@@ -478,6 +501,7 @@ int fs_setcwd(char *pathname)
     printf("stored in cwdAbsolutePath: |%s|\n", cwdAbsolutePath);
 
     // set new cwd, cannot free old
+	if(cwd != rootDir) free(cwd);
     cwd = loadDir(ppi->parent, index);
 
     printf("2 setcwd root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
@@ -487,10 +511,17 @@ int fs_setcwd(char *pathname)
            cwd[0].fileSize, cwd[1].fileName, cwd[1].fileSize, cwd[2].fileName, cwd[2].fileSize);
 
     // cleanup
-    if (ppi->parent == NULL)
-        free(ppi->parent);
+	if(ppi->parent != rootDir && ppi->parent != cwd)
+                {
+                free(ppi->parent);
+                }
+
     if (ppi != NULL)
+        {
         free(ppi);
+        ppi=NULL;
+        }
+
     return 0; // Success
 }
 
@@ -530,7 +561,17 @@ int fs_isFile(char *filename)
     DE *dirEntry = &(ppi->parent[index]);
     int result = dirEntry->isDirectory == 0; // Returns 1 if file (isDirectory == 0), 0 otherwise
 
-    free(ppi);
+	if(ppi->parent != rootDir && ppi->parent != cwd)
+                {
+                free(ppi->parent);
+                }
+
+    if (ppi != NULL)
+        {
+        free(ppi);
+        ppi=NULL;
+        }
+
     return result;
 }
 
@@ -572,7 +613,17 @@ int fs_isDir(char *pathname)
     printf("result: %d \n", result);
     //   printf("Dir removed\n");
 
-    free(ppi);
+if(ppi->parent != rootDir && ppi->parent != cwd)
+                {
+                free(ppi->parent);
+                }
+
+    if (ppi != NULL)
+        {
+        free(ppi);
+        ppi=NULL;
+        }
+
     return result;
 }
 
@@ -632,7 +683,17 @@ int fs_delete(char *filename)
     printf("fileSize: %d \n", fileRemove->fileSize);
     printf("isDirectory: %d \n", fileRemove->isDirectory);
 
-    free(ppi);
+	if(ppi->parent != rootDir && ppi->parent != cwd)
+                {
+                free(ppi->parent);
+                }
+
+    if (ppi != NULL)
+        {
+        free(ppi);
+        ppi=NULL;
+        }
+
     return 0;
 }
 
@@ -674,7 +735,16 @@ int fs_stat(const char *path, struct fs_stat *buf)
     buf->st_createtime = dir->createdTime;
     buf->st_isdir = dir->isDirectory;
 
-    free(ppi);
+	if(ppi->parent != rootDir && ppi->parent != cwd)
+                {
+                free(ppi->parent);
+                }
+
+    if (ppi != NULL)
+        {
+        free(ppi);
+        ppi=NULL;
+        }
 
     return 0; // Success
 }
