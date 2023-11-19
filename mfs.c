@@ -338,25 +338,22 @@ int fs_setcwd(char *pathname)
 {
     printf("fs_setcwd starts with cwdAbsolutePath: %s\n", cwdAbsolutePath);
 
- printf("setcwd start root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
+    printf("setcwd start root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
            rootDir[0].fileSize, rootDir[1].fileName, rootDir[1].fileSize, rootDir[2].fileName, rootDir[2].fileSize);
 
-
-printf("setcwd start cwd[0]:|%s| filesize: %d _____ cwd[1]: |%s| filesize: %d  cwd[2]: |%s| filesize: %d\n", cwd[0].fileName,
+    printf("setcwd start cwd[0]:|%s| filesize: %d _____ cwd[1]: |%s| filesize: %d  cwd[2]: |%s| filesize: %d\n", cwd[0].fileName,
            cwd[0].fileSize, cwd[1].fileName, cwd[1].fileSize, cwd[2].fileName, cwd[2].fileSize);
 
     char *pathComponents[32];
     int componentCount = 0;
     char *newPath = malloc(256);
+
     if (pathname[0] == '/')
         strcat(newPath, "/");
 
-	//check if cd . or cd ..
-
-    // first tokenize path compnents to array an parse '.' and '..'
+    // first tokenize path components to array and parse '.' and '..'
     char *saveptr = NULL;
     char *token = strtok_r(pathname, " /", &saveptr);
-
 
     if (token != NULL)
     {
@@ -364,49 +361,57 @@ printf("setcwd start cwd[0]:|%s| filesize: %d _____ cwd[1]: |%s| filesize: %d  c
         printf("token %d: |%s| pathComponents[%d]: |%s|\n", componentCount, token, componentCount, pathComponents[componentCount]);
         componentCount++;
     }
+
     while (token != NULL && componentCount < 32)
     {
         token = strtok_r(NULL, " /", &saveptr);
-        if (token == NULL) break;
+        if (token == NULL)
+            break;
 
-        if (token[1] == '.')
+        if (strcmp(token, ".") == 0)
         {
+            // "cd .": Do nothing, stay in the current directory
+            continue;
+        }
+        else if (strcmp(token, "..") == 0)
+        {
+            // "cd ..": Move up one level
             componentCount--;
             pathComponents[componentCount] = NULL;
         }
-
-        if (token[0] != '.' && token[1] != '.')
+        else
         {
+            // Normal directory component
             pathComponents[componentCount] = strdup(token);
             componentCount++;
         }
     }
 
     printf("value of cwdAbsolutepath: |%s|\n", cwdAbsolutePath);
-    //add cwd to path (RElative)
+
+    // add cwd to path (Relative)
     if (pathname[0] != '/')
     {
         strcpy(newPath, cwdAbsolutePath);
         // Ensure there's a trailing slash after cwdAbsolutePath, if not already present
         if (cwdAbsolutePath[strlen(cwdAbsolutePath) - 1] != '/')
         {
-             strcat(newPath, "/");
+            strcat(newPath, "/");
         }
     }
 
     for (int i = 0; i < componentCount; i++)
-    	{
-//        printf("pathComponents at i: % is %s\n", i, pathComponents[i]);
+    {
         strcat(newPath, pathComponents[i]);
         if (i != componentCount - 1)
             strcat(newPath, "/");
-    	}
+    }
 
-    	// ParsePath
-    	parsePathInfo *ppi = malloc(sizeof(parsePathInfo));
-    	int parsePathResult = parsePath(pathname, ppi);
- 
-	if (parsePathResult != 0)
+    // ParsePath
+    parsePathInfo *ppi = malloc(sizeof(parsePathInfo));
+    int parsePathResult = parsePath(newPath, ppi);
+
+    if (parsePathResult != 0)
         return -1; // ParsePath check done(o)
 
     // find index
@@ -414,33 +419,31 @@ printf("setcwd start cwd[0]:|%s| filesize: %d _____ cwd[1]: |%s| filesize: %d  c
     printf("index : %d \n", index);
 
     if (index == -1)
-	{
-	printf("find entry returned not found\n");
-	return -1; // find index check done(o)
-	}
+    {
+        printf("find entry returned not found\n");
+        return -1; // find index check done(o)
+    }
 
     // Check if the target is a directory
-    if (isDirectory(&ppi->parent[ppi->indexOfLastElement])==0)
+    if (isDirectory(&ppi->parent[ppi->indexOfLastElement]) == 0)
     {
         printf("%s is not a directory \n", ppi->lastElement);
         return -1; // Target is not a directory
     }
 
-
-    if (cwdAbsolutePath != NULL) free(cwdAbsolutePath);
+    if (cwdAbsolutePath != NULL)
+        free(cwdAbsolutePath);
     cwdAbsolutePath = newPath;
     printf("stored in cwdAbsolutePath: |%s|\n", cwdAbsolutePath);
 
-	//set new cwd, cannot free old
+    // set new cwd, cannot free old
     cwd = loadDir(ppi->parent, index);
 
- printf("2 setcwd root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
+    printf("2 setcwd root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
            rootDir[0].fileSize, rootDir[1].fileName, rootDir[1].fileSize, rootDir[2].fileName, rootDir[2].fileSize);
 
-
-printf("2 setcwd cwd[0]:|%s| filesize: %d _____ cwd[1]: |%s| filesize: %d  cwd[2]: |%s| filesize: %d\n", cwd[0].fileName,
+    printf("2 setcwd cwd[0]:|%s| filesize: %d _____ cwd[1]: |%s| filesize: %d  cwd[2]: |%s| filesize: %d\n", cwd[0].fileName,
            cwd[0].fileSize, cwd[1].fileName, cwd[1].fileSize, cwd[2].fileName, cwd[2].fileSize);
-
 
     // cleanup
     if (ppi->parent == NULL)
@@ -449,6 +452,7 @@ printf("2 setcwd cwd[0]:|%s| filesize: %d _____ cwd[1]: |%s| filesize: %d  cwd[2
         free(ppi);
     return 0; // Success
 }
+
 
 // fs_isFIle and fs_isDir are similar
 // The difference is  when file: return 0; when dir: return 1;
