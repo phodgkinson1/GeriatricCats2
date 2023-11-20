@@ -112,7 +112,7 @@ int fs_rmdir(const char *pathname)
         return -1;
 
     // update pathname with new element
-    char *newPath = pathUpdate(pathname);
+      char *newPath = pathUpdate(pathname);
 
     // ParsePath
     parsePathInfo *ppi = malloc(sizeof(parsePathInfo));
@@ -150,16 +150,6 @@ int fs_rmdir(const char *pathname)
     // by iterating through the entries, check its empty condition
     // checkDirEmpty == 0 -----> target dir is empty ----> ready to remove
     int checkDirEmpty = isDirEmpty(dirRemove);
-
-    if (checkDirEmpty != 0)
-    	{ 
-     	if(dirRemove != NULL & ppi->parent != cwd && ppi->parent !=rootDir)
-		{
-		free(ppi->parent);
-		}
-	dirRemove=NULL;
-	return -1;
-    	}
 
     printf("check Dir Empty: %d \n", checkDirEmpty);
     printf("0 means ready to remove the dir!!\n");
@@ -396,7 +386,7 @@ int fs_setcwd(char *pathname)
         printf("token %d: |%s| pathComponents[%d]: |%s|\n", componentCount, token, componentCount, pathComponents[componentCount]);
         componentCount++;
     }
-	if (strcmp(token, ".") == 0)
+	if (strcmp(token, "..") == 0)
 		 {
                         //get second to last item from parsePath
                         int parsePathResult0 = parsePath(cwdAbsolutePath, ppi);
@@ -423,7 +413,7 @@ int fs_setcwd(char *pathname)
 				 	pathComponents[componentCount]= "";
 				}
                          }
-	if (strcmp(token, "..") == 0)
+	if (strcmp(token, ".") == 0)
 		{
 		componentCount--;
                 pathComponents[componentCount]= "";
@@ -453,8 +443,8 @@ int fs_setcwd(char *pathname)
 
 	if(componentCount==0){
 		return 0;
-		}
 
+		}
     printf("value of cwdAbsolutepath: |%s|\n", cwdAbsolutePath);
 
     // add cwd to path (Relative)
@@ -476,7 +466,7 @@ int fs_setcwd(char *pathname)
     }
 
     // ParsePath
-    int parsePathResult = parsePath(newPath, ppi);
+    int parsePathResult = parsePath(pathname, ppi);
 
     if (parsePathResult != 0)
         return -1; // ParsePath check done(o)
