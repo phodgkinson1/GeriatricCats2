@@ -26,10 +26,13 @@
 
 typedef struct b_fcb
 	{
-	/** TODO add al the information you need in the file control block **/
-	char * buf;		//holds the open file buffer
-	int index;		//holds the current position in the buffer
-	int buflen;		//holds how many valid bytes are in the buffer
+	struct fs_diriteminfo * fi;	//holds the low level systems file info
+	b_io_fd fd;
+	char * fileBuffer;
+	char * rdBuffer;
+	int rdBufferIndex;
+	int fileBlock;
+	int fp;
 	} b_fcb;
 	
 b_fcb fcbArray[MAXFCBS];
@@ -42,7 +45,7 @@ void b_init ()
 	//init fcbArray to all free
 	for (int i = 0; i < MAXFCBS; i++)
 		{
-		fcbArray[i].buf = NULL; //indicates a free fcbArray
+		fcbArray[i].fi = NULL; //indicates a free fcbArray
 		}
 		
 	startup = 1;
@@ -53,21 +56,33 @@ b_io_fd b_getFCB ()
 	{
 	for (int i = 0; i < MAXFCBS; i++)
 		{
-		if (fcbArray[i].buff == NULL)
+		if (fcbArray[i].fi == NULL)
 			{
 			return i;		//Not thread safe (But do not worry about it for this assignment)
 			}
 		}
 	return (-1);  //all in use
 	}
-	
+
 // Interface to open a buffered file
 // Modification of interface for this assignment, flags match the Linux flags for open
 // O_RDONLY, O_WRONLY, or O_RDWR
+/*
+0	No Permission	—
+1	Execute	–x
+2	Write	-w-
+3	Execute + Write	-wx
+4	Read	r–
+5	Read + Execute	r-x
+6	Read +Write	rw-
+7	Read + Write +Execute	rwx
+*/
 b_io_fd b_open (char * filename, int flags)
 	{
 	b_io_fd returnFd;
 
+	printf("b_open received filename: %s\n", filename);
+	printf("flags: %d\n", flags);
 	//*** TODO ***:  Modify to save or set any information needed
 	//
 	//
@@ -75,8 +90,8 @@ b_io_fd b_open (char * filename, int flags)
 	if (startup == 0) b_init();  //Initialize our system
 	
 	returnFd = b_getFCB();				// get our own file descriptor
-										// check for error - all used FCB's
-	
+								// check for error - all used FCB's
+	returnFd = -1;
 	return (returnFd);						// all set
 	}
 
