@@ -44,7 +44,7 @@ int fs_mkdir(const char *pathname, mode_t mode)
         printf("Directory at capacity.\n");
         return -1;
     }
-
+	free(empty);
     // load parent
     int startBlockNewDir = initDir(DEFAULT_ENTRIES, ppiTest->parent, nextAvailable);
     printf("in mkdir startBlockNewDir: %d \n", startBlockNewDir);
