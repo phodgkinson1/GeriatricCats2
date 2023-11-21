@@ -68,21 +68,46 @@ b_io_fd b_getFCB ()
 // Modification of interface for this assignment, flags match the Linux flags for open
 // O_RDONLY, O_WRONLY, or O_RDWR
 /*
-0	No Permission	—
-1	Execute	–x
-2	Write	-w-
-3	Execute + Write	-wx
-4	Read	r–
-5	Read + Execute	r-x
-6	Read +Write	rw-
-7	Read + Write +Execute	rwx
+linux below
+#define O_RDONLY	00000000
+#define O_WRONLY	00000001
+#define O_RDWR		00000002
+#define O_CREAT		00000100
+#define O_TRUNC		00001000
+#define O_APPEND	00002000
+
 */
 b_io_fd b_open (char * filename, int flags)
 	{
 	b_io_fd returnFd;
+	printf("cp calls open(O_RDONLY) AND THEN O_WRONLY | O_CREAT | O_TRUNC) \n");
 
 	printf("b_open received filename: %s\n", filename);
 	printf("flags: %d\n", flags);
+	if((flags | O_RDONLY)== O_RDONLY)
+		{
+		printf("passed O_RDONLY!\n");
+		}
+   	if((flags & O_WRONLY)== O_WRONLY)
+                {
+                printf("passed O_WRONLY!\n");
+                }
+
+	if((flags & O_RDWR)== O_RDWR)
+                {
+                printf("passed O_WRONLY!\n");
+                }
+
+	if((flags & O_CREAT)== O_CREAT)
+                {
+                printf("passed O_CREAT!\n");
+                }
+    	if((flags & O_TRUNC)== O_TRUNC)
+                {
+                printf("passed O_TRUNC!\n");
+                }
+
+
 	//*** TODO ***:  Modify to save or set any information needed
 	//
 	//
