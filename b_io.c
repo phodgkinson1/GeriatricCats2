@@ -436,17 +436,111 @@ int b_write (b_io_fd fd, char * buffer, int count)
 //  +-------------+------------------------------------------------+--------+
 int b_read (b_io_fd fd, char * buffer, int count)
 	{
+	if (startup == 0) b_init();  // Initialize our system
 
-	if (startup == 0) b_init();  //Initialize our system
+    // Check that fd is between 0 and (MAXFCBS-1)
+    if ((fd < 0) || (fd >= MAXFCBS)) {
+        return -1;  // Invalid file descriptor
+    }
 
-	//if WRONLY then exit- WRITE ME
+    // Check if the specified FCB is actually in use
+    if (fcbArray[fd].fd == -1) {
+        return -1;  // File not open for this descriptor
+    }
 
-	// check that fd is between 0 and (MAXFCBS-1)
-	if ((fd < 0) || (fd >= MAXFCBS))
-		{
-		return (-1); 					//invalid file descriptor
-		}
-		b_close(fd);
+    char *userBuffer = buffer;
+    fcbArray[fd].rdBuffer = fcbArray[fd].fileBuffer;
+    fcbArray[fd].rdBuffer += fcbArray[fd].rdBufferIndex;
+    int bytesRead = 0;
+    int toRead;
+    int fileSize = fcbArray[fd].parent[fcbArray[fd].dirIndex].fileSize;
+    int fileRemainder = fileSize - fcbArray[fd].fp;
+
+    // Do not read past end of file
+    if (count <= fileRemainder) {
+        toRead = count;
+    } else {
+        toRead = fileRemainder;
+    }
+
+    // For the first read on the file
+    if (fcbArray[fd].fileBuffer[0] == '\0') {
+        fcbArray[fd].rdBufferIndex = 0;
+    }
+
+    // Optimization to skip empty read
+    if (count == 0) {
+        return 0;
+    }
+
+    // If file buffer not empty (1st CONDITION)
+    if (fcbArray[fd].rdBufferIndex != 0) {
+        int remainder = B_CHUNK_SIZE - fcbArray[fd].rdBufferIndex - 1;
+        int amt;
+
+        if (toRead < remainder) {
+            amt = toRead;
+        } else {
+            amt = remainder;
+        }
+
+        // Copy from our buffer to user buffer
+        memcpy(userBuffer, fcbArray[fd].rdBuffer, amt);
+
+        // Update all trackers
+        userBuffer += amt;
+        fcbArray[fd].rdBufferIndex += amt;
+        bytesRead += amt;
+        toRead -= amt;
+    }
+
+    // After remainder of the last buffer, see if can pass whole blocks
+    if (toRead >= B_CHUNK_SIZE) {
+        // Evaluate if can LBAread even blocks of B_CHUNK_SIZE straight to userBuffer to avoid copying
+        int blocks = toRead / B_CHUNK_SIZE;
+        int readOut = blocks * B_CHUNK_SIZE;
+
+        int blockFetch = LBAread(userBuffer, blocks, (fcbArray[fd].parentExtent[fcbArray[fd].dirIndex].tableArray[0].start));
+
+        if (blockFetch != blocks) {
+            printf("Could not read blocks to userBuffer\n");
+        }
+
+        // Update all trackers
+        userBuffer += readOut;
+        fcbArray[fd].fileBlock += blocks;
+        bytesRead += readOut;
+        toRead -= readOut;
+    }
+
+    // If partial block after passing whole blocks or finishing the whole buffer from 1st condition
+    if (toRead > 0) {
+        // If filled buffer from the previous call, clear
+        if (fcbArray[fd].rdBufferIndex == B_CHUNK_SIZE - 1) {
+            fcbArray[fd].rdBuffer = fcbArray[fd].fileBuffer;
+            memset(fcbArray[fd].fileBuffer, '\0', B_CHUNK_SIZE);
+            fcbArray[fd].rdBufferIndex = 0;
+        }
+
+        // Fetch a new block to the file buffer
+        if (LBAread(fcbArray[fd].rdBuffer, 1, (fcbArray[fd].parentExtent[fcbArray[fd].dirIndex].tableArray[0].start)) != 1) {
+            printf("Could not read block to fileBuffer\n");
+            exit(1);
+        }
+
+        // Copy from fileBuffer to the user buffer
+        memcpy(userBuffer, fcbArray[fd].rdBuffer, toRead);
+
+        // Update all trackers
+        fcbArray[fd].fileBlock++;
+        userBuffer += toRead;
+        fcbArray[fd].rdBufferIndex += toRead;
+        bytesRead += toRead;
+        toRead -= toRead;
+    }
+
+    // Update the file pointer (fp is the file index)
+    fcbArray[fd].fp += bytesRead;
 	
 
 
@@ -569,24 +663,34 @@ int b_read (b_io_fd fd, char * buffer, int count)
 
 
 
-	return (0);	//Change this to bytes read
+	return bytesRead;	//Change this to bytes read
 	}
 	
 // Interface to Close the file	
-int b_close (b_io_fd fd)
+int b_close (b_io_fd fd) 
 	{
+    // If write permissions for FCB
+    if ((fcbArray[fd].permissions & O_WRONLY) == O_WRONLY ||
+        (fcbArray[fd].permissions & O_RDWR) == O_RDWR) {
+        // Write directory from FCB
+        // Write extent from FCB
+        // (Pseudo code: LBAwrite(fcbArray[fd].parent, sizeof(directory), fcbArray[fd].parentLocation))
+        // (Pseudo code: LBAwrite(fcbArray[fd].parentExtent, sizeof(extent), fcbArray[fd].parentExtentLocation))
+    }
 
-//if write permissions for fcb
-                //write dir from fcb
-                //write extent from fcb
-//free the parent in fcb
-//free extent in fcb
+    // Free the parent in FCB
+    free(fcbArray[fd].parent);
 
-	if(fcbArray[fd].fileBuffer != NULL) 
-		{
-		free(fcbArray[fd].fileBuffer);
-		fcbArray[fd].fileBuffer= NULL;
-		}
+    // Free extent in FCB
+    free(fcbArray[fd].parentExtent);
 
-       fcbArray[fd].fd= -1;
+    if (fcbArray[fd].fileBuffer != NULL) {
+        free(fcbArray[fd].fileBuffer);
+        fcbArray[fd].fileBuffer = NULL;
+    }
+
+    fcbArray[fd].fd = -1;
+
+    return 0;
 }
+

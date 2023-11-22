@@ -355,8 +355,25 @@ int cmd_cp(int argcnt, char *argvec[])
 int cmd_mv(int argcnt, char *argvec[])
 {
 #if (CMDMV_ON == 1)
-	return -99;
-	// **** TODO ****  For you to implement
+	if (argcnt != 3)
+	{
+		printf("Usage: mv source dest\n");
+		return -1;
+	}
+
+	char *source = argvec[1];
+	char *dest = argvec[2];
+
+	if (fs_move(source, dest) == 0)
+	{
+		printf("File moved successfully.\n");
+		return 0;
+	}
+	else
+	{
+		printf("Error moving file.\n");
+		return -1;
+	}
 #endif
 	return 0;
 }
