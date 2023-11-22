@@ -31,7 +31,8 @@ typedef struct b_fcb
 //int allocation;
 	int permissions;
 	DE * parent;
-	EXTTABLE * parentExt;
+	EXTTABLE * parentExtent;
+	int allocation;
 	int dirIndex;
 	struct fs_diriteminfo * fi;	//holds the low level systems file info in assign 5- do we need this though? we could also just keep dir Entry pointer here.
 					//figure out what we use from orig assign 5 low level ptr info. then replace with info through ptrs.
@@ -213,12 +214,11 @@ b_io_fd b_open (char * filename, int flags)
 	                if(ext == NULL)
                		        {
                        		currentFile=NULL;
-                       		ext=NULL;
                        		printf("loadExtent() error\n");
                        		fcbArray[returnFd].fd= -1;
                        		return -1;
                        		}
-
+			fcbArray[returnFd].parentExtent= ext;
  			printf("extent for file says start is: %d\n", ext[ppi->indexOfLastElement].tableArray[0].start);
 	                /* itr array of extents- max in system is 5 hardcoded,
                		but could do helper function that checks last extent for positive start and count of 0, 
@@ -235,7 +235,6 @@ b_io_fd b_open (char * filename, int flags)
 			}//end truncate
 		}//end load file section
 
-
   //update fcb
                 fcbArray[returnFd].permissions= flags;
                 fcbArray[returnFd].parent= ppi->parent;
@@ -244,10 +243,7 @@ b_io_fd b_open (char * filename, int flags)
 //              printf("access test fcbArray[fd].parentExt[nextAvailable].tableArray[0].start : %d\n", 
 //              fcbArray[returnFd].parentExt[nextAvailable].tableArray[0].start);
 
-
-	b_close(returnFd);
-	//return (returnFd);						// all set
-	return -1;
+	return (returnFd);						// all set
 	}
 
 
@@ -256,9 +252,11 @@ int b_seek (b_io_fd fd, off_t offset, int whence)
 	{
 	if (startup == 0) b_init();  //Initialize our system
 
+	printf("not written, does nothing yet.\n");
 	// check that fd is between 0 and (MAXFCBS-1)
 	if ((fd < 0) || (fd >= MAXFCBS))
 		{
+		b_close(fd);
 		return (-1); 					//invalid file descriptor
 		}
 		
@@ -272,69 +270,146 @@ int b_seek (b_io_fd fd, off_t offset, int whence)
 int b_write (b_io_fd fd, char * buffer, int count)
 	{
 	if (startup == 0) b_init();  //Initialize our system
+	printf("passed fd= %d, count: %d\n", fd, count);
+
+	if(buffer == NULL)
+		{
+		printf("buffer passed is invalid\n");
+		return (-1);
+		}
+
+	b_fcb * fcb= &fcbArray[fd];
+
+	//exit if read only
+	if((fcb->permissions | O_RDONLY)== O_RDONLY)
+                {
+		printf("No write permissions\n");
+		return (-1);
+                }
+
+  	//if append go to end of file
+	if((fcb->permissions | O_APPEND)== O_APPEND)
+                {
+		b_seek(fd, fcb->parent[fcb->dirIndex].fileSize, SEEK_SET);
+                }
 
 	// check that fd is between 0 and (MAXFCBS-1)
 	if ((fd < 0) || (fd >= MAXFCBS))
 		{
+
 		return (-1); 					//invalid file descriptor
 		}
 
 
-/* tested but not integrated here
-
+	//load extent for current file if not loaded in open's create condition
         EXTTABLE * ext;
 
-//load extent new file
-                ext= loadExtent(currentFile);
-                if(ext == NULL)
-                        {
-                        currentFile=NULL;
-                        ext=NULL;
-                        printf("loadExtent() error\n");
-                        fcbArray[returnFd].fd= -1;
-                        return -1;
-                        }
+      	if (fcb->parentExtent== NULL)
+		{
+        	ext= loadExtent(fcb->parent);
+		if(ext == NULL)
+          		{
+               		printf("loadExtent() error\n");
+			b_close(fcb->fd);
+                	return -1;
+              		}
+		fcb->parentExtent= ext;
+		}
 
- printf("extent for file says start is: %d\n", ext[nextAvailable].tableArray[0].start);
-                 EXTENT *tempArray = allocateBlocks(START_ALLOCATION, START_ALLOCATION);
-                 if(tempArray == NULL)
-                        {
-                        currentFile=NULL;
-                        ext = NULL;
-                        fcbArray[returnFd].fd= -1;
-                        printf("allocateBlocks() error\n");
-                        return -1;
-                        }
-
-                printf("allocation for new file begins at: %d\n", tempArray[0].start);
-                        // fcb allocation =ALOCATE START
-                //copy allocation info to extent for directory new file
-                int tempArraySize= sizeof(tempArray) / sizeof(tempArray[0]);
-                int itrMax = 5;
-                if (tempArraySize < 5) itrMax= tempArraySize;
-                /* copy to array of extents- max in system is 5 hardcoded,
-                but could do a helper function that inits second extent table,
-                stores location of new extent in start and count of 0, and continues
-                copying to index of new extent table. Then when reading/writing,
-                would check each extent array index for start >0 but count ==0 for next
-                extent table to load.
-                
-                for(int i=0; i < itrMax; i++)
-                        {
-                        ext[nextAvailable].tableArray[i].start= tempArray[i].start;
-                        ext[nextAvailable].tableArray[i].count= tempArray[i].count;
-                        printf("ext array[%d] start: %d count: %d\n", i,  ext[nextAvailable].tableArray[i].start,
-                        ext[nextAvailable].tableArray[i].count);
-                        }
-
-*/
+	printf("extent for file says start is: %d\n", fcb->parentExtent[fcb->dirIndex].tableArray[0].start);
 
 
+        int userCount= count;
+ 	int userBlocks;
+	fcb->allocation= START_ALLOCATION;
+	int currentBlock= 0;
+	int i=0;
 
+	while(userBlocks>0)
+		{
+		userBlocks= ((userCount + BLOCK_SIZE - 1) / BLOCK_SIZE);
+		printf("userCount: %d\n", userBlocks);
+               	int extStart= fcb->parentExtent[fcb->dirIndex].tableArray[i].start;
+                int extCount= fcb->parentExtent[fcb->dirIndex].tableArray[i].count;
+		//if must allocate space
+		if ((extCount-currentBlock) < userBlocks)
+			{
+			printf("entered allocate condition\n");
+			int blocksNeeded= userBlocks-extCount;
+			printf("blocksNeeded: %d\n", blocksNeeded);
 
+  			EXTENT *tempArray = allocateBlocks(blocksNeeded, blocksNeeded);
+                 	if(tempArray == NULL)
+                        	{
+                        	if(ext !=NULL) ext = NULL;
+				b_close(fcb->fd);
+                        	printf("allocateBlocks() error\n");
+                        	return -1;
+                        	}
+			//copy allocation info to extent for directory new file
+                	int tempArraySize= sizeof(tempArray) / sizeof(tempArray[0]);
+                	int itrMax = 5;
+                	if (tempArraySize < 5) itrMax= tempArraySize;
+                	/* copy to array of extents- max in system is 5 hardcoded,
+                	but could do a helper function that inits second extent table,
+                	stores location of new extent in start and count of 0, and continues
+                	copying to index of new extent table. Then when reading/writing,
+                	would check each extent array index for start >0 but count ==0 for next
+                	extent table to load.
+			*/
+			EXTTABLE * extArray; //for clarity
+                	for(int j = i; j < (itrMax + i); j++)
+                        	{
+				extArray= &fcb->parentExtent[fcb->dirIndex];
+				//if extent contiguous with last element, combine.
+				//UNTESTED IF STATEMENT ONLY ELSE TESTED!
+				if(j > 0 && (extArray->tableArray[j-1].start + extArray->tableArray[j-1].count) ==  tempArray[j].start-1)
+					{
+					printf("new allocation is continuous with old extent\n");
+					currentBlock= extArray->tableArray[j-1].count;
+					extArray->tableArray[j-1].count += tempArray[j].count;
+					}
+				//not continguous with last extent
+				else
+					{
+					extArray->tableArray[j].start= tempArray[j].start;
+                                	extArray->tableArray[j].count= tempArray[j].count;
+					currentBlock= 0;
+					}
+					
+				printf("ext array[%d] start: %d count: %d\n", j,  fcb->parentExtent[fcb->dirIndex].tableArray[j].start,
+                        	fcb->parentExtent[fcb->dirIndex].tableArray[j].count);
+				}
+				extArray=NULL;
 
-		b_close(fd);
-		//update filesize inside dir whenever allocate called.
+				//for future improvement- if not requesting continuous file allocation
+				// we must loop through tempArray size starting at j before next loop.
+
+			     	extStart= fcb->parentExtent[fcb->dirIndex].tableArray[i].start;
+                		extCount= fcb->parentExtent[fcb->dirIndex].tableArray[i].count;
+
+				int toWrite= extCount-currentBlock;
+				userBlocks -= toWrite;
+				printf("toWrite: %d, userCount: %d userBlocks: %d\n", toWrite, userCount, userBlocks);
+				 if (LBAwrite(buffer, toWrite, extStart) != toWrite)
+                			{
+                			printf("b_write() LBAwrite() error!\n");
+                			exit(1);
+                			}
+
+				}//end if
+
+			else
+				{
+				       if (LBAwrite(buffer, userBlocks, extStart) != userBlocks)
+                                        {
+                                        printf("b_write() LBAwrite() error!\n");
+                                        exit(1);
+                                        }
+
+				}
+		}//end while
+		fcb->parent[fcb->dirIndex].fileSize += count;
 	return (0); //Change this
 	}
 
@@ -364,26 +439,154 @@ int b_read (b_io_fd fd, char * buffer, int count)
 
 	if (startup == 0) b_init();  //Initialize our system
 
+	//if WRONLY then exit- WRITE ME
+
 	// check that fd is between 0 and (MAXFCBS-1)
 	if ((fd < 0) || (fd >= MAXFCBS))
 		{
 		return (-1); 					//invalid file descriptor
 		}
 		b_close(fd);
-	return (0);	//Change this
+	
+
+
+//read routine should read up until end of an extent count, and then index unless at end of extent table (<5 condition)
+//your goal is to create a proper outer loop to iterate through the extent table as reading to end of each extent
+
+
+	/*
+	the following routine is my assignment 5 function for b_read and it works to expectation. nothing needs to be changed except for
+	extent variables
+
+int b_read (b_io_fd fd, char * buffer, int count)
+	{
+
+	if (startup == 0) b_init();  //Initialize our system
+
+	// check that fd is between 0 and (MAXFCBS-1)
+	if ((fd < 0) || (fd >= MAXFCBS))
+		{
+		return (-1); 					//invalid file descriptor
+		}
+
+	// and check that the specified FCB is actually in use	
+	if (fcbArray[fd].fi == NULL)		//File not open for this descriptor
+		{
+		return -1;
+		}
+
+        char * userBuffer= buffer;
+        fcbArray[fd].rdBuffer=fcbArray[fd].fileBuffer;
+	fcbArray[fd].rdBuffer+=fcbArray[fd].rdBufferIndex;
+        int bytesRead=0;
+        int toRead;
+        int fileSize= (fcbArray[fd].fi)->fileSize;
+        int fileRemainder= fileSize-fcbArray[fd].fp;
+
+	//do not return past end of file vvv
+	if (count<=fileRemainder) toRead=count;
+	else toRead=fileRemainder;
+
+	//for first read on file
+	if(fcbArray[fd].fileBuffer[0]=='\0') fcbArray[fd].rdBufferIndex=0;
+
+	//optimization to skip empty read
+	if(count==0) return 0;
+
+	//if filebuffer not empty- 1st CONDITION
+        if(fcbArray[fd].rdBufferIndex!=0)
+		{
+		int remainder= B_CHUNK_SIZE-(fcbArray[fd].rdBufferIndex)-1;
+		int amt;
+		if(toRead<remainder) amt=toRead;
+               	else amt=remainder;
+		//copy from our buffer to userbuffer
+  		memcpy(userBuffer, fcbArray[fd].rdBuffer, amt);
+                //update all trackers
+		userBuffer+= amt;
+                fcbArray[fd].rdBufferIndex += amt;
+                bytesRead += amt;
+                toRead -=amt;
+		}
+	//after remainder of last buffer, see if can pass whole blocks
+	if(toRead>=B_CHUNK_SIZE)
+		{
+		//eval if can LBAread even blocks of B_CHUNK_SIZE straight to userBuffer to avoid copying.
+                int blocks=toRead/B_CHUNK_SIZE;
+		int readOut=blocks*B_CHUNK_SIZE;
+                int blockFetch= LBAread(userBuffer, blocks, (fcbArray[fd].fi->location)+(fcbArray[fd].fileBlock));
+                if(blockFetch != blocks)
+                	{
+                        printf("could not read blocks to userBuffer\n");
+                        }
+		//update all trackers
+		userBuffer +=readOut;
+		fcbArray[fd].fileBlock +=blocks;
+                bytesRead += readOut;
+                toRead-= readOut;
+		}
+	//if partial block after passing whole blocks or finishing whole buffer from 1st condition
+	if(toRead>0)
+		{
+		//if filled buffer from previous call, clear
+		if(fcbArray[fd].rdBufferIndex==B_CHUNK_SIZE-1)
+			{
+			fcbArray[fd].rdBuffer=fcbArray[fd].fileBuffer;
+                        memset(fcbArray[fd].fileBuffer, '\0', sizeof(fcbArray[fd].fileBuffer));
+                        fcbArray[fd].rdBufferIndex=0;
+			}
+			//fetch new block to file Buffer
+			if(LBAread(fcbArray[fd].rdBuffer, 1, (fcbArray[fd].fi->location)+(fcbArray[fd].fileBlock)) != 1)
+        	                {
+                	        printf("could not read block to fileBuffer\n");
+                        	exit;
+                		}
+			//copy from fileBuffer to user buffer
+			memcpy(userBuffer, fcbArray[fd].rdBuffer, toRead);
+           		//update all trackers
+                        fcbArray[fd].fileBlock++;
+                        userBuffer+=toRead;
+			fcbArray[fd].rdBufferIndex += toRead;
+                        bytesRead += toRead;
+                        toRead -=toRead;
+		}
+	//fp file pointer is file index
+        fcbArray[fd].fp += bytesRead;
+
+	return bytesRead;
+	}//end read
+
+	*/
+
+
+
+
+
+
+
+
+
+
+
+
+	return (0);	//Change this to bytes read
 	}
 	
 // Interface to Close the file	
 int b_close (b_io_fd fd)
 	{
-//why is below free causing free problem?
-//	if(fcbArray[fd].fileBuffer) free(fcbArray[fd].fileBuffer);
-       fcbArray[fd].fd= -1;
 
 //if write permissions for fcb
-	//load extent for DE *
-	// if allocated > START_ALLOCATION
-		//release unused blocks by taking new fileSize in dir * in blocks and subtracting  (fileblocks?) member from structure with current block
-	//write dir, //write extent
+                //write dir from fcb
+                //write extent from fcb
+//free the parent in fcb
+//free extent in fcb
 
-	}
+	if(fcbArray[fd].fileBuffer != NULL) 
+		{
+		free(fcbArray[fd].fileBuffer);
+		fcbArray[fd].fileBuffer= NULL;
+		}
+
+       fcbArray[fd].fd= -1;
+}
