@@ -741,3 +741,76 @@ int fs_stat(const char *path, struct fs_stat *buf)
 
     return 0; // Success
 }
+
+// cmd: move
+
+int fs_move(char *fileName, char* destinationDir)
+{
+	if (fileName == NULL || destinationDir == NULL)
+	{
+		printf("Parameters are NULL\n");
+	}
+
+	// Parse the fileName **
+	parsePathInfo *ppiF = malloc(sizeof(parsePathInfo));
+
+	int parsePathResultF = parsePath(fileName, ppiF);
+	if (parsePathResultF != 0)
+	{
+		printf("ParsePathResult F is invalid\n");
+		return -1;
+	}
+
+	// check fileName is file
+	int isFileResult = fs_isFile(fileName);
+	if (isFileResult != 1)
+	{
+		printf("isFileResult is not 1, which means not a file\n");
+		return -1;
+	}
+
+	int indexF = FindEntryInDir(ppiF->parent, ppiF->lastElement);
+	if (indexF == -1) return -1;
+
+	// ***** 1) parsePath fileName 2) check whether fileName is file 3) find the index
+
+	// ******************************************************************************
+
+	parsePathInfo *ppiD = malloc(sizeof(parsePathInfo));
+
+	int parsePathResultD = parsePath(destinationDir, ppiD);
+	if (parsePathResultD != 0)
+	{
+		printf("ParsePathResult2 is invalid\n");
+		return -1;
+	}
+
+	int isDirResult = fs_isDir(destinationDir);
+	if (isDirResult != 1)
+	{
+		printf("isDirResult is not 1, which means not a directory");
+		return -1;
+	}
+
+	int indexD = FindEntryInDir(ppiD->parent, "");
+	if (indexD == -1)
+	{
+		printf("Destination not detected\n");
+		return -1;
+	}
+
+        // ***** 1) parsePath destinationDir 2)check whether it is dir 3) find the index
+
+    	// Move file from source to destination directory
+    	memcpy(&ppiD->parent[indexD], &ppiF->parent[indexF], sizeof(DE));
+    	markDirUnused(&ppiF->parent[indexF]);
+
+    	// Update the directories
+    	writeDir(ppiF->parent, ppiF->indexOfLastElement);
+    	writeDir(ppiD->parent, ppiD->indexOfLastElement);
+	
+    	free(ppiF);
+    	free(ppiD);
+
+        return 0;
+}
