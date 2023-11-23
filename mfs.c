@@ -792,22 +792,43 @@ int fs_move(char *fileName, char* destinationDir)
 		return -1;
 	}
 
-	int indexD = FindEntryInDir(ppiD->parent, "");
-	if (indexD == -1)
+	int properIndexD = FindEntryInDir(ppiD->parent, "");
+	if (properIndexD == -1)
 	{
-		printf("Destination not detected\n");
+		printf("Destination directory is usable\n");
 		return -1;
 	}
 
         // ***** 1) parsePath destinationDir 2)check whether it is dir 3) find the index
 
-    	// Move file from source to destination directory
-    	memcpy(&ppiD->parent[indexD], &ppiF->parent[indexF], sizeof(DE));
-    	markDirUnused(&ppiF->parent[indexF]);
+	// ------- Add file to destination directory
+	DE *originalFile = &ppiF->parent[indexF];
+	DE *newDir = &ppiD->parent[properIndexD];
 
-    	// Update the directories
-    	writeDir(ppiF->parent, ppiF->indexOfLastElement);
-    	writeDir(ppiD->parent, ppiD->indexOfLastElement);
+	// Copy original meta data into newDir
+	strncpy(newDir->fileName, originalFile->fileName, DIR_NAME_LEN -1);
+	newDir->fileName[DIR_NAME_LEN -1] = '\0';
+	// newDir->extentBlockStart = originalFile->extentBlockStart;
+	newDir->fileSize = originalFile->fileSize;
+	newDir->createdTime = originalFile->createdTime;
+	newDir->modifiedTime = originalFile->modifiedTime;
+	newDir->lastAccessedTime = originalFile->lastAccessedTime;
+	// newDir->extentIndex = originalFile->extentIndex;
+	newDir->isDirectory = originalFile->isDirectory;
+
+
+    	markDirUnused(originalFile);
+
+    	// Update (EXT and Dir) of Original and New
+	EXTTABLE *extOriginal = loadExtent(ppiF->parent);
+	int parentStartBlockOriginal = extOriginal[1].tableArray[0].start;
+    	writeDir(ppiF->parent, parentStartBlockOriginal);
+	free(extOriginal);
+
+        EXTTABLE *extNew = loadExtent(ppiD->parent);
+	int parentStartBlockNew = extNew[1].tableArray[0].start;
+    	writeDir(ppiD->parent, parentStartBlockNew);
+	free(extNew);
 	
     	free(ppiF);
     	free(ppiD);
