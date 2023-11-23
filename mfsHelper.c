@@ -154,6 +154,14 @@ int FindEntryInDir(DE *dir, char *fileName)
 	// Iterate through the whole number of entries
 	for (int i = 2; i < numEntries; i++) // **** paige- I changed this to int i=2 from 0
 	{
+		if (fileName[0] == '\0')
+		{
+			if (dir[i].fileName[0] == '\0')
+			{
+				// Empty spot
+				return i; 
+			}
+		}
 		// x is found -> initialize x as 0
 		if (strcmp(dir[i].fileName, fileName) == 0)
 			return i;

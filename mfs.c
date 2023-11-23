@@ -819,6 +819,9 @@ int fs_move(char *fileName, char* destinationDir)
 
     	markDirUnused(originalFile);
 
+
+	// I think pathUpdate(), a helper function in mfsHelper.c, should be called somewhere in this function.
+
     	// Update (EXT and Dir) of Original and New
 	EXTTABLE *extOriginal = loadExtent(ppiF->parent);
 	int parentStartBlockOriginal = extOriginal[1].tableArray[0].start;
