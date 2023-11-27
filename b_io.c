@@ -259,8 +259,33 @@ int b_seek (b_io_fd fd, off_t offset, int whence)
 		b_close(fd);
 		return (-1); 					//invalid file descriptor
 		}
-		
-		
+
+	int fileSize = fcbArray[fd].parent[fcbArray[fd].dirIndex].fileSize;
+
+	off_t new_fp;
+
+		if (whence == SEEK_SET)
+		{
+			new_fp = offset;
+			break;
+		}
+		else if (whence == SEEK_CUR)
+		{
+			new_fp = fcbArray[fd].fp + offset;
+			break;
+		}
+		else if (whence == SEEK_END)
+		{
+			new_fp = fileSize + offset;
+			break;
+		}
+		else 
+		{
+			return -1;
+		}
+
+	fcbArray[fd].fp = new_fp;
+
 	return (0); //Change this
 	}
 

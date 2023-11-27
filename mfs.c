@@ -822,15 +822,18 @@ int fs_move(char *fileName, char* destinationDir)
 
 	// I think pathUpdate(), a helper function in mfsHelper.c, should be called somewhere in this function.
 
+
     	// Update (EXT and Dir) of Original and New
 	EXTTABLE *extOriginal = loadExtent(ppiF->parent);
 	int parentStartBlockOriginal = extOriginal[1].tableArray[0].start;
     	writeDir(ppiF->parent, parentStartBlockOriginal);
+	pathUpdate((const char*) fileName);
 	free(extOriginal);
 
         EXTTABLE *extNew = loadExtent(ppiD->parent);
 	int parentStartBlockNew = extNew[1].tableArray[0].start;
     	writeDir(ppiD->parent, parentStartBlockNew);
+	pathUpdate((const char*) destinationDir);
 	free(extNew);
 	
     	free(ppiF);
