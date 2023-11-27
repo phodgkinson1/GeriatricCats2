@@ -267,17 +267,14 @@ int b_seek (b_io_fd fd, off_t offset, int whence)
 		if (whence == SEEK_SET)
 		{
 			new_fp = offset;
-			break;
 		}
 		else if (whence == SEEK_CUR)
 		{
 			new_fp = fcbArray[fd].fp + offset;
-			break;
 		}
 		else if (whence == SEEK_END)
 		{
 			new_fp = fileSize + offset;
-			break;
 		}
 		else 
 		{
