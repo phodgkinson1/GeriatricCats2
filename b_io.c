@@ -697,15 +697,32 @@ int b_close(b_io_fd fd) {
 
     // If the file was opened with write permissions, update the file system structures
     if ((fcbArray[fd].permissions & O_WRONLY) == O_WRONLY || (fcbArray[fd].permissions & O_RDWR) == O_RDWR) {
+/*
+	int dir = (sizeof(DE) * DEFAULT_ENTRIES + BLOCK_SIZE -1)/ BLOCK_SIZE;
+
+        if (LBAwrite(fcbArray[fd].parent, dir, fcbArray[fd].parent[fcbArray[fd].dirIndex].extentBlockStart) != dir) {
+            printf("Error writing directory information\n");
+            return -1;
+        }
+
+	int ext = (sizeof(EXTTABLE) * DEFAULT_ENTRIES + BLOCK_SIZE -1) / BLOCK_SIZE;
+
+	// int ext = (sizeof(EXTTABLE) * DEFAULT_ENTRIES + BLOCK_SIZE -1) / BLOCK_SIZE;
+        if (LBAwrite(fcbArray[fd].parentExtent, ext, fcbArray[fd].parentExtent[fcbArray[fd].dirIndex].tableArray[0].start) != ext) {
+            printf("Error writing extent table information\n");
+            return -1;
+        }
+*/
+
         // Write directory information back to the file system
-        if (LBAwrite(fcbArray[fd].parent, sizeof(DE), fcbArray[fd].parent[fcbArray[fd].dirIndex].location) != 1) {
+        if (LBAwrite(fcbArray[fd].parent, sizeof(DE), fcbArray[fd].parent[fcbArray[fd].dirIndex].extentBlockStart) != 1) {
             // Handle error in writing directory information
             printf("Error writing directory information\n");
             return -1;
         }
 
         // Write extent table information back to the file system
-        if (LBAwrite(fcbArray[fd].parentExtent, sizeof(EXTTABLE), fcbArray[fd].parentExtent[fcbArray[fd].dirIndex].location) != 1) {
+        if (LBAwrite(fcbArray[fd].parentExtent, sizeof(EXTTABLE), fcbArray[fd].parentExtent[fcbArray[fd].dirIndex].tableArray[0].start) != 1) {
             // Handle error in writing extent table information
             printf("Error writing extent table information\n");
             return -1;
