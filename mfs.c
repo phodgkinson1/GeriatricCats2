@@ -80,8 +80,6 @@ int fs_mkdir(const char *pathname, mode_t mode)
 
     writeDir(ppiTest->parent, parentDirStart);
 
-    writeDir(loadDir(ppiTest->parent, nextAvailable), startBlockNewDir);
-
     if (ppiTest->parent[1].extentBlockStart == cwd[1].extentBlockStart)
     {
         cwd = ppiTest->parent;
