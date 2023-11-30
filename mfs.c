@@ -44,7 +44,7 @@ int fs_mkdir(const char *pathname, mode_t mode)
         printf("Directory at capacity.\n");
         return -1;
     }
-	free(empty);
+    free(empty);
     // load parent
     int startBlockNewDir = initDir(DEFAULT_ENTRIES, ppiTest->parent, nextAvailable);
     printf("in mkdir startBlockNewDir: %d \n", startBlockNewDir);
@@ -88,10 +88,10 @@ int fs_mkdir(const char *pathname, mode_t mode)
     // cleanup
     if (ppiTest != NULL)
     {
-	if(ppiTest->parent != rootDir && ppiTest->parent != cwd)
-		{
-		free(ppiTest->parent);
-		}
+        if (ppiTest->parent != rootDir && ppiTest->parent != cwd)
+        {
+            free(ppiTest->parent);
+        }
         free(ppiTest);
         ppiTest = NULL;
     }
@@ -110,7 +110,7 @@ int fs_rmdir(const char *pathname)
         return -1;
 
     // update pathname with new element
-      char *newPath = pathUpdate(pathname);
+    char *newPath = pathUpdate(pathname);
 
     // ParsePath
     parsePathInfo *ppi = malloc(sizeof(parsePathInfo));
@@ -172,18 +172,18 @@ int fs_rmdir(const char *pathname)
     printf("fileSize: %d \n", dirRemove->fileSize);
     printf("isDirectory: %d \n", dirRemove->isDirectory);
 
-	if(ppi->parent != rootDir && ppi->parent != cwd)
-                {
-                free(ppi->parent);
-                }
+    if (ppi->parent != rootDir && ppi->parent != cwd)
+    {
+        free(ppi->parent);
+    }
 
     if (ppi != NULL)
-	{
+    {
         free(ppi);
-	ppi=NULL;
-	}
- 
-  return 0;
+        ppi = NULL;
+    }
+
+    return 0;
 }
 
 fdDir *fs_opendir(const char *pathname)
@@ -239,7 +239,7 @@ fdDir *fs_opendir(const char *pathname)
     printf("Inside of fs_opendir ppi->indexOfLastElement: %d\n", ppi->indexOfLastElement);
 
     fdDir *fdd = malloc(sizeof(fdDir));
-	
+
     fdd->directory = myDir;
     printf("openDir fdd->firectory.isDirectory: %d\n", fdd->directory->isDirectory);
     fdd->dirEntryPosition = 0;
@@ -248,13 +248,13 @@ fdDir *fs_opendir(const char *pathname)
     printf("End of fs_opendir\n");
     // cleanup
 
+    if (ppi->parent != rootDir && ppi->parent != cwd)
+    {
+        free(ppi->parent);
+    }
 
-	if(ppi->parent != rootDir && ppi->parent != cwd)
-                {
-                free(ppi->parent);
-                }
-
-    if (ppi!= NULL) free(ppi);
+    if (ppi != NULL)
+        free(ppi);
 
     return (fdd);
 }
@@ -278,12 +278,12 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
         return NULL;
     }
 
-    printf("After checking if dirPath = NULL\n");
+    //printf("After checking if dirPath = NULL\n");
 
     // check if the directory entry is being used, iterate until you find a use entry
     while (dirPath->directory[dirPath->dirEntryPosition].fileName[0] == '\0')
     {
-        printf("Inside while loop\n");
+        //printf("Inside while loop\n");
         dirPath->dirEntryPosition++;
         if (dirPath->dirEntryPosition >= directoryEntries)
         {
@@ -291,8 +291,8 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirPath)
         }
     }
 
-	struct fs_diriteminfo * dii= malloc(sizeof(struct fs_diriteminfo));
-	dirPath->di= dii;
+    struct fs_diriteminfo *dii = malloc(sizeof(struct fs_diriteminfo));
+    dirPath->di = dii;
 
     // copy the name of currenct directory to fs_diriteminfo
     strcpy(dirPath->di->d_name, dirPath->directory[dirPath->dirEntryPosition].fileName);
@@ -355,7 +355,8 @@ char *fs_getcwd(char *pathname, size_t size)
 
 int fs_setcwd(char *pathname)
 {
-	if(rootDir==NULL) loadDir(rootDir, rootGlobal);
+    if (rootDir == NULL)
+        loadDir(rootDir, rootGlobal);
     printf("fs_setcwd starts with cwdAbsolutePath: %s\n", cwdAbsolutePath);
 
     printf("setcwd start root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
@@ -384,54 +385,55 @@ int fs_setcwd(char *pathname)
         printf("token %d: |%s| pathComponents[%d]: |%s|\n", componentCount, token, componentCount, pathComponents[componentCount]);
         componentCount++;
     }
-	if (strcmp(token, "..") == 0)
-		 {
-                        //get second to last item from parsePath
-                        int parsePathResult0 = parsePath(cwdAbsolutePath, ppi);
-                        if(parsePathResult0 == 0)
-                                {
-                                        printf("parsePathResult set to parent");
-                                        cwd=ppi->parent;
-                                         printf("setcwd after cd . root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
-                                        rootDir[0].fileSize, rootDir[1].fileName, rootDir[1].fileSize, rootDir[2].fileName, rootDir[2].fileSize);
+    if (strcmp(token, "..") == 0)
+    {
+        // get second to last item from parsePath
+        int parsePathResult0 = parsePath(cwdAbsolutePath, ppi);
+        if (parsePathResult0 == 0)
+        {
+            printf("parsePathResult set to parent");
+            cwd = ppi->parent;
+            printf("setcwd after cd . root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
+                   rootDir[0].fileSize, rootDir[1].fileName, rootDir[1].fileSize, rootDir[2].fileName, rootDir[2].fileSize);
 
-                                        printf("setcwd after cd . cwd[0]:|%s| filesize: %d _____ cwd[1]: |%s| filesize: %d  cwd[2]: |%s| filesize: %d\n", cwd[0].fileName,
-                                        cwd[0].fileSize, cwd[1].fileName, cwd[1].fileSize, cwd[2].fileName, cwd[2].fileSize);
+            printf("setcwd after cd . cwd[0]:|%s| filesize: %d _____ cwd[1]: |%s| filesize: %d  cwd[2]: |%s| filesize: %d\n", cwd[0].fileName,
+                   cwd[0].fileSize, cwd[1].fileName, cwd[1].fileSize, cwd[2].fileName, cwd[2].fileSize);
 
-                                        printf("cwdAbsolutePath before cd .. : |%s|\n", cwdAbsolutePath);
-                                        printf("strlen cwdABspath: |%ld|\n", strlen(cwdAbsolutePath));
-                                	int i= strlen(cwdAbsolutePath)-1;
-					while(cwdAbsolutePath[i]!='/'){
-					i--;
-					}
-					i++;
-					cwdAbsolutePath[i]= '\0';
-					printf("new cwdAbsolutePath after cd . : |%s|\n", cwdAbsolutePath);
-					componentCount--; 
-				 	pathComponents[componentCount]= "";
-				}
-                         }
-	if (strcmp(token, ".") == 0)
-		{
-		componentCount--;
-                pathComponents[componentCount]= "";
-		}
-
+            printf("cwdAbsolutePath before cd .. : |%s|\n", cwdAbsolutePath);
+            printf("strlen cwdABspath: |%ld|\n", strlen(cwdAbsolutePath));
+            int i = strlen(cwdAbsolutePath) - 1;
+            while (cwdAbsolutePath[i] != '/')
+            {
+                i--;
+            }
+            i++;
+            cwdAbsolutePath[i] = '\0';
+            printf("new cwdAbsolutePath after cd . : |%s|\n", cwdAbsolutePath);
+            componentCount--;
+            pathComponents[componentCount] = "";
+        }
+    }
+    if (strcmp(token, ".") == 0)
+    {
+        componentCount--;
+        pathComponents[componentCount] = "";
+    }
 
     while (token != NULL && componentCount < 32)
     {
         token = strtok_r(NULL, " /", &saveptr);
-        if (token == NULL) break;
+        if (token == NULL)
+            break;
 
-	if(strcmp(token, ".") == 0)
-        	{
-		if (componentCount > 0)
-			{
-			componentCount--;
-			pathComponents[componentCount]= "";
-			}
-		}
-        else if (strcmp(token, "..") != 0 )
+        if (strcmp(token, ".") == 0)
+        {
+            if (componentCount > 0)
+            {
+                componentCount--;
+                pathComponents[componentCount] = "";
+            }
+        }
+        else if (strcmp(token, "..") != 0)
         {
             // Normal directory component
             pathComponents[componentCount] = strdup(token);
@@ -439,10 +441,10 @@ int fs_setcwd(char *pathname)
         }
     }
 
-	if(componentCount==0){
-		return 0;
-
-		}
+    if (componentCount == 0)
+    {
+        return 0;
+    }
     printf("value of cwdAbsolutepath: |%s|\n", cwdAbsolutePath);
 
     // add cwd to path (Relative)
@@ -492,7 +494,8 @@ int fs_setcwd(char *pathname)
     printf("stored in cwdAbsolutePath: |%s|\n", cwdAbsolutePath);
 
     // set new cwd, cannot free old
-	if(cwd != rootDir) free(cwd);
+    if (cwd != rootDir)
+        free(cwd);
     cwd = loadDir(ppi->parent, index);
 
     printf("2 setcwd root[0]:|%s| filesize: %d _____ root[1]: |%s| filesize: %d  root[2]: |%s| filesize: %d\n", rootDir[0].fileName,
@@ -502,21 +505,19 @@ int fs_setcwd(char *pathname)
            cwd[0].fileSize, cwd[1].fileName, cwd[1].fileSize, cwd[2].fileName, cwd[2].fileSize);
 
     // cleanup
-	if(ppi->parent != rootDir && ppi->parent != cwd)
-                {
-                free(ppi->parent);
-                }
+    if (ppi->parent != rootDir && ppi->parent != cwd)
+    {
+        free(ppi->parent);
+    }
 
     if (ppi != NULL)
-        {
+    {
         free(ppi);
-        ppi=NULL;
-        }
+        ppi = NULL;
+    }
 
     return 0; // Success
 }
-
-
 
 // fs_isFIle and fs_isDir are similar
 // The difference is  when file: return 0; when dir: return 1;
@@ -552,16 +553,16 @@ int fs_isFile(char *filename)
     DE *dirEntry = &(ppi->parent[index]);
     int result = dirEntry->isDirectory == 0; // Returns 1 if file (isDirectory == 0), 0 otherwise
 
-	if(ppi->parent != rootDir && ppi->parent != cwd)
-                {
-                free(ppi->parent);
-                }
+    if (ppi->parent != rootDir && ppi->parent != cwd)
+    {
+        free(ppi->parent);
+    }
 
     if (ppi != NULL)
-        {
+    {
         free(ppi);
-        ppi=NULL;
-        }
+        ppi = NULL;
+    }
 
     return result;
 }
@@ -604,16 +605,16 @@ int fs_isDir(char *pathname)
     printf("result: %d \n", result);
     //   printf("Dir removed\n");
 
-if(ppi->parent != rootDir && ppi->parent != cwd)
-                {
-                free(ppi->parent);
-                }
+    if (ppi->parent != rootDir && ppi->parent != cwd)
+    {
+        free(ppi->parent);
+    }
 
     if (ppi != NULL)
-        {
+    {
         free(ppi);
-        ppi=NULL;
-        }
+        ppi = NULL;
+    }
 
     return result;
 }
@@ -674,16 +675,16 @@ int fs_delete(char *filename)
     printf("fileSize: %d \n", fileRemove->fileSize);
     printf("isDirectory: %d \n", fileRemove->isDirectory);
 
-	if(ppi->parent != rootDir && ppi->parent != cwd)
-                {
-                free(ppi->parent);
-                }
+    if (ppi->parent != rootDir && ppi->parent != cwd)
+    {
+        free(ppi->parent);
+    }
 
     if (ppi != NULL)
-        {
+    {
         free(ppi);
-        ppi=NULL;
-        }
+        ppi = NULL;
+    }
 
     return 0;
 }
@@ -726,116 +727,114 @@ int fs_stat(const char *path, struct fs_stat *buf)
     buf->st_createtime = dir->createdTime;
     buf->st_isdir = dir->isDirectory;
 
-	if(ppi->parent != rootDir && ppi->parent != cwd)
-                {
-                free(ppi->parent);
-                }
+    if (ppi->parent != rootDir && ppi->parent != cwd)
+    {
+        free(ppi->parent);
+    }
 
     if (ppi != NULL)
-        {
+    {
         free(ppi);
-        ppi=NULL;
-        }
+        ppi = NULL;
+    }
 
     return 0; // Success
 }
 
 // cmd: move
 
-int fs_move(char *fileName, char* destinationDir)
+int fs_move(char *fileName, char *destinationDir)
 {
-	if (fileName == NULL || destinationDir == NULL)
-	{
-		printf("Parameters are NULL\n");
-	}
+    if (fileName == NULL || destinationDir == NULL)
+    {
+        printf("Parameters are NULL\n");
+    }
 
-	// Parse the fileName **
-	parsePathInfo *ppiF = malloc(sizeof(parsePathInfo));
+    // Parse the fileName **
+    parsePathInfo *ppiF = malloc(sizeof(parsePathInfo));
 
-	int parsePathResultF = parsePath(fileName, ppiF);
-	if (parsePathResultF != 0)
-	{
-		printf("ParsePathResult F is invalid\n");
-		return -1;
-	}
+    int parsePathResultF = parsePath(fileName, ppiF);
+    if (parsePathResultF != 0)
+    {
+        printf("ParsePathResult F is invalid\n");
+        return -1;
+    }
 
-	// check fileName is file
-	int isFileResult = fs_isFile(fileName);
-	if (isFileResult != 1)
-	{
-		printf("isFileResult is not 1, which means not a file\n");
-		return -1;
-	}
+    // check fileName is file
+    int isFileResult = fs_isFile(fileName);
+    if (isFileResult != 1)
+    {
+        printf("isFileResult is not 1, which means not a file\n");
+        return -1;
+    }
 
-	int indexF = FindEntryInDir(ppiF->parent, ppiF->lastElement);
-	if (indexF == -1) return -1;
+    int indexF = FindEntryInDir(ppiF->parent, ppiF->lastElement);
+    if (indexF == -1)
+        return -1;
 
-	// ***** 1) parsePath fileName 2) check whether fileName is file 3) find the index
+    // ***** 1) parsePath fileName 2) check whether fileName is file 3) find the index
 
-	// ******************************************************************************
+    // ******************************************************************************
 
-	parsePathInfo *ppiD = malloc(sizeof(parsePathInfo));
+    parsePathInfo *ppiD = malloc(sizeof(parsePathInfo));
 
-	int parsePathResultD = parsePath(destinationDir, ppiD);
-	if (parsePathResultD != 0)
-	{
-		printf("ParsePathResult2 is invalid\n");
-		return -1;
-	}
+    int parsePathResultD = parsePath(destinationDir, ppiD);
+    if (parsePathResultD != 0)
+    {
+        printf("ParsePathResult2 is invalid\n");
+        return -1;
+    }
 
-	int isDirResult = fs_isDir(destinationDir);
-	if (isDirResult != 1)
-	{
-		printf("isDirResult is not 1, which means not a directory");
-		return -1;
-	}
+    int isDirResult = fs_isDir(destinationDir);
+    if (isDirResult != 1)
+    {
+        printf("isDirResult is not 1, which means not a directory");
+        return -1;
+    }
 
-	int properIndexD = FindEntryInDir(ppiD->parent, "");
-	if (properIndexD == -1)
-	{
-		printf("Destination directory is usable\n");
-		return -1;
-	}
+    int properIndexD = FindEntryInDir(ppiD->parent, "");
+    if (properIndexD == -1)
+    {
+        printf("Destination directory is usable\n");
+        return -1;
+    }
 
-        // ***** 1) parsePath destinationDir 2)check whether it is dir 3) find the index
+    // ***** 1) parsePath destinationDir 2)check whether it is dir 3) find the index
 
-	// ------- Add file to destination directory
-	DE *originalFile = &ppiF->parent[indexF];
-	DE *newDir = &ppiD->parent[properIndexD];
+    // ------- Add file to destination directory
+    DE *originalFile = &ppiF->parent[indexF];
+    DE *newDir = &ppiD->parent[properIndexD];
 
-	// Copy original meta data into newDir
-	strncpy(newDir->fileName, originalFile->fileName, DIR_NAME_LEN -1);
-	newDir->fileName[DIR_NAME_LEN -1] = '\0';
-	// newDir->extentBlockStart = originalFile->extentBlockStart;
-	newDir->fileSize = originalFile->fileSize;
-	newDir->createdTime = originalFile->createdTime;
-	newDir->modifiedTime = originalFile->modifiedTime;
-	newDir->lastAccessedTime = originalFile->lastAccessedTime;
-	// newDir->extentIndex = originalFile->extentIndex;
-	newDir->isDirectory = originalFile->isDirectory;
+    // Copy original meta data into newDir
+    strncpy(newDir->fileName, originalFile->fileName, DIR_NAME_LEN - 1);
+    newDir->fileName[DIR_NAME_LEN - 1] = '\0';
+    // newDir->extentBlockStart = originalFile->extentBlockStart;
+    newDir->fileSize = originalFile->fileSize;
+    newDir->createdTime = originalFile->createdTime;
+    newDir->modifiedTime = originalFile->modifiedTime;
+    newDir->lastAccessedTime = originalFile->lastAccessedTime;
+    // newDir->extentIndex = originalFile->extentIndex;
+    newDir->isDirectory = originalFile->isDirectory;
 
+    markDirUnused(originalFile);
 
-    	markDirUnused(originalFile);
+    // I think pathUpdate(), a helper function in mfsHelper.c, should be called somewhere in this function.
 
+    // Update (EXT and Dir) of Original and New
+    EXTTABLE *extOriginal = loadExtent(ppiF->parent);
+    int parentStartBlockOriginal = extOriginal[1].tableArray[0].start;
+    writeDir(ppiF->parent, parentStartBlockOriginal);
+    pathUpdate((const char *)fileName);
+    free(extOriginal);
 
-	// I think pathUpdate(), a helper function in mfsHelper.c, should be called somewhere in this function.
+    EXTTABLE *extNew = loadExtent(ppiD->parent);
+    int parentStartBlockNew = extNew[1].tableArray[0].start;
+    writeDir(ppiD->parent, parentStartBlockNew);
+    pathUpdate((const char *)destinationDir);
+    free(extNew);
 
+    free(ppiF);
+    free(ppiD);
 
-    	// Update (EXT and Dir) of Original and New
-	EXTTABLE *extOriginal = loadExtent(ppiF->parent);
-	int parentStartBlockOriginal = extOriginal[1].tableArray[0].start;
-    	writeDir(ppiF->parent, parentStartBlockOriginal);
-	pathUpdate((const char*) fileName);
-	free(extOriginal);
-
-        EXTTABLE *extNew = loadExtent(ppiD->parent);
-	int parentStartBlockNew = extNew[1].tableArray[0].start;
-    	writeDir(ppiD->parent, parentStartBlockNew);
-	pathUpdate((const char*) destinationDir);
-	free(extNew);
-	
-    	free(ppiF);
-    	free(ppiD);
-
-        return 0;
+    return 0;
 }
