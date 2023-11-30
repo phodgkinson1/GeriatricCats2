@@ -715,7 +715,7 @@ int b_close(b_io_fd fd) {
 */
 
         // Write directory information back to the file system
-        if (LBAwrite(fcbArray[fd].parent, sizeof(DE), fcbArray[fd].parent[fcbArray[fd].dirIndex].extentBlockStart) != 1) {
+        if (LBAwrite(fcbArray[fd].parent, sizeof(DE), fcbArray[fd].parent[fcbArray[fd].dirIndex].extentIndex) != 1) {
             // Handle error in writing directory information
             printf("Error writing directory information\n");
             return -1;
